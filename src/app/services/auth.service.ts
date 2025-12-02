@@ -17,6 +17,7 @@ export class AuthService {
       tap(response => {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user_name', response.name);
+        localStorage.setItem('user_role', response.role);
       })
     );
   }
@@ -25,12 +26,17 @@ export class AuthService {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user_name');
+    localStorage.removeItem('user_role');
     this.router.navigate(['/login']);
   }
 
   // Verifica se está logado (para o Guard)
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
+  }
+
+  isAdmin(): boolean {
+    return localStorage.getItem('user_role') === 'ADMIN';
   }
 
   // Pega o token (para o Interceptor)

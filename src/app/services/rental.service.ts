@@ -23,4 +23,8 @@ export class RentalService {
   returnRental(id: string, extraCosts: number): Observable<any> {
   return this.http.patch(`${this.apiUrl}/${id}/return`, { extraCosts });
 }
+
+updateExtraCosts(id: string, extraCosts: number): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/${id}/costs`, { extraCosts });
+}
 }

@@ -21,6 +21,11 @@
         <span>Locações</span>
       </a>
 
+      <a routerLink="/dashboard/agenda" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-calendar"></i>
+        <span>Agenda</span>
+      </a>
+
       <a routerLink="/dashboard/clientes" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
         <i class="pi pi-users"></i>
         <span>Clientes</span>
@@ -36,7 +41,7 @@
         <span>Portal Senatran</span>
       </a>
 
-      <div class="menu-category">GESTÃO</div>
+      <div class="menu-category" *ngIf="isAdmin" >GESTÃO</div>
 
       <a routerLink="/dashboard/financeiro" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
         <i class="pi pi-dollar"></i>

@@ -1,0 +1,139 @@
+<div class="page-container">
+  
+  <div class="header-area">
+    <h1>Agendamento de Reservas</h1>
+    <p class="subtitle">Gerencie as reservas futuras e sinais recebidos.</p>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-info">
+        <span class="label">TOTAL AGENDADO</span>
+        <h2 class="value text-white">{{ totalAgendado }}</h2>
+        <span class="sub">Reservas futuras</span>
+      </div>
+      <div class="icon-circle purple"><i class="pi pi-clock"></i></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-info">
+        <span class="label">SINAIS RECEBIDOS</span>
+        <h2 class="value text-green">R$ {{ sinaisRecebidos | number:'1.2-2' }}</h2>
+        <span class="sub">Valor em caixa</span>
+      </div>
+      <div class="icon-circle green"><i class="pi pi-dollar"></i></div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-info">
+        <span class="label">PRÓXIMA RESERVA</span>
+        <h2 class="value text-blue">{{ proximaReserva }}</h2>
+        <span class="sub">Fique atento</span>
+      </div>
+      <div class="icon-circle blue"><i class="pi pi-calendar"></i></div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    
+    <div class="form-panel card-dark">
+      <h3><i class="pi pi-plus-circle"></i> Nova Reserva</h3>
+      
+      <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <label>Cliente</label>
+          <p-dropdown [options]="customers" optionLabel="name" optionValue="id" formControlName="customerId" 
+                      placeholder="Pesquisar cliente..." [filter]="true" styleClass="w-full"></p-dropdown>
+        </div>
+
+        <div class="field">
+          <label>Carretinha (Tipo)</label>
+          <p-dropdown [options]="trailers" optionLabel="plate" optionValue="id" formControlName="trailerId" 
+                      placeholder="Selecione o tipo..." styleClass="w-full">
+             <ng-template let-item pTemplate="item">
+               <span>{{ item.plate }} - {{ item.model }}</span>
+             </ng-template>
+          </p-dropdown>
+        </div>
+
+        <div class="field">
+          <label>Valor do Sinal</label>
+          <div class="p-inputgroup">
+            <span class="p-inputgroup-addon">R$</span>
+            <p-inputNumber formControlName="signalValue" mode="decimal" [minFractionDigits]="2" placeholder="0,00"></p-inputNumber>
+          </div>
+        </div>
+
+      <div class="field">
+          <label>Período (Retirada - Devolução)</label>
+          <p-calendar 
+            formControlName="date" 
+            selectionMode="range" 
+            [readonlyInput]="true" 
+            placeholder="Selecione o período..." 
+            dateFormat="dd/mm/yy" 
+            appendTo="body" 
+            styleClass="w-full" 
+            [showIcon]="true">
+          </p-calendar>
+        </div>
+
+        <button pButton label="Agendar Reserva" icon="pi pi-check" class="btn-purple w-full mt-3" type="submit"></button>
+      </form>
+    </div>
+
+    <div class="agenda-panel">
+      
+      <div class="search-bar">
+        <span><i class="pi pi-calendar"></i> Agenda</span>
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input type="text" pInputText placeholder="Filtrar por cliente..." />
+        </span>
+      </div>
+
+      <div class="agenda-list">
+        
+        <div *ngFor="let group of agendaGroups" class="date-group">
+          <h4 class="date-header">
+            <span class="dot"></span> 
+            {{ group.date | date:'EEEE, dd/MM/yyyy' | uppercase }}
+          </h4>
+
+          <div class="cards-container">
+            <div *ngFor="let item of group.items" class="agenda-card">
+              
+              <div class="card-left">
+                <div class="avatar"><i class="pi pi-user"></i></div>
+                <div class="info">
+                  <span class="name">{{ item.customer.name }}</span>
+                  
+                </div>
+              </div>
+
+              <div class="card-center">
+                <div class="trailer-box">
+                  <i class="pi pi-truck"></i>
+                  <span>{{ item.trailer.size }} - {{ item.trailer.model }}</span>
+                </div>
+                <span class="doc-info">CPF/CNPJ: {{ item.customer.document }}</span>
+              </div>
+
+              <div class="card-right">
+                <span class="signal-label">SINAL</span>
+                <span class="signal-value">R$ {{ (item.totalValue * 0.3) | number:'1.2-2' }}</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="agendaGroups.length === 0" class="empty-state">
+          Nenhuma reserva encontrada.
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

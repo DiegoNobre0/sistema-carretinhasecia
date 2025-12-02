@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TrailerService } from '../../services/trailer.service';
+import { ImageCompressService } from 'src/app/services/image-compress.service';
 
 @Component({
   selector: 'app-trailers',
@@ -29,7 +30,8 @@ export class TrailersComponent implements OnInit {
 
   constructor(
     private trailerService: TrailerService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private imageService: ImageCompressService
   ) {
     this.trailerForm = this.fb.group({
       plate: ['', Validators.required],
@@ -58,15 +60,18 @@ export class TrailersComponent implements OnInit {
     this.trailerForm.reset();
   }
 
-  onFileSelected(event: any) {
+onFileSelected(event: any) {
     const file = event.target.files[0];
+    
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        // Salva a imagem no formulário
-        this.trailerForm.patchValue({ photoUrl: e.target.result });
-      };
-      reader.readAsDataURL(file);
+      if (!file.type.match(/image.*/)) {
+        alert('Selecione uma imagem válida.');
+        return;
+      }
+
+      this.imageService.compressFile(file).then(result => {
+        this.trailerForm.patchValue({ photoUrl: result });
+      });
     }
   }
 

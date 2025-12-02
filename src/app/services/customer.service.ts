@@ -22,4 +22,10 @@ export class CustomerService {
   // Chama a rota que criamos no Backend
   return this.http.get<any>(`${this.apiUrl}/${id}/history`);
 }
+
+updateCustomer(id: string, data: any): Observable<any> {
+  return this.http.put(`${this.apiUrl}/${id}`, data);
+}
+
+
 }

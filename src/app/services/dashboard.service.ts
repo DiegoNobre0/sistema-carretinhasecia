@@ -10,7 +10,10 @@ export class DashboardService {
 
   constructor(private http: HttpClient) {}
 
-  getMetrics(): Observable<any> {
-    return this.http.get<any>(this.apiUrl);
-  }
+getMetrics(month?: number, year?: number): Observable<any> {
+  let params = `?year=${year || new Date().getFullYear()}`;
+  if (month) params += `&month=${month}`;
+  
+  return this.http.get<any>(`${this.apiUrl}${params}`);
+}
 }

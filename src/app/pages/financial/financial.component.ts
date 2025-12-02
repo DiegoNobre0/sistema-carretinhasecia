@@ -11,6 +11,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { TagModule } from 'primeng/tag';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-financial',
@@ -18,7 +20,7 @@ import { TagModule } from 'primeng/tag';
   imports: [
     CommonModule, ReactiveFormsModule,
     ButtonModule, TableModule, DialogModule, InputTextModule, 
-    InputNumberModule, DropdownModule, CalendarModule, TagModule
+    InputNumberModule, DropdownModule, CalendarModule, TagModule,ToastModule
   ],
   templateUrl: './financial.component.html',
   styleUrls: ['./financial.component.scss']
@@ -46,7 +48,8 @@ export class FinancialComponent implements OnInit {
 
   constructor(
     private financialService: FinancialService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private messageService: MessageService
   ) {
     this.transactionForm = this.fb.group({
       description: ['', Validators.required],
@@ -73,15 +76,20 @@ export class FinancialComponent implements OnInit {
     this.transactionForm.reset({ type: 'EXPENSE', date: new Date() });
   }
 
-  onSubmit() {
+onSubmit() {
     if (this.transactionForm.valid) {
       this.financialService.createTransaction(this.transactionForm.value).subscribe({
         next: () => {
           this.displayModal = false;
           this.loadData();
-          alert('Lançamento realizado!');
+          
+          this.messageService.add({ 
+            severity: 'success', 
+            summary: 'Lançamento Salvo', 
+            detail: 'O valor foi registrado no caixa.' 
+          });
         },
-        error: () => alert('Erro ao salvar.')
+        error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar lançamento.' })
       });
     }
   }

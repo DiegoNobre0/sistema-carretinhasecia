@@ -12,9 +12,9 @@ import { AuthService } from '../../services/auth.service'; // <--- 1. Importe o 
 })
 export class AdminLayoutComponent {
   isMobileMenuOpen = false;
-
+  isAdmin = false;
   // 2. Injete o AuthService no construtor
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) {this.isAdmin = this.authService.isAdmin();}
 
   toggleMenu() {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;

@@ -1,124 +1,300 @@
 <div class="page-container">
   <div class="header-action">
     <h1>Gestão de Clientes</h1>
-    <button pButton label="+ Novo Cliente" (click)="showDialog()"></button>
+    <button pButton label="Novo Cliente" icon="pi pi-user-plus" (click)="showDialog()"></button>
   </div>
 
   <div class="card-table">
-    <p-table [value]="customers">
+    <p-table [value]="customers" [paginator]="true" [rows]="10">
       <ng-template pTemplate="header">
         <tr>
-          <th>Nome</th>
-          <th>Doc</th>
+          <th>Nome / Razão</th>
+          <th>Documento</th>
+          <th>Telefone</th>
           <th>Tipo</th>
-          <th>Ações</th> </tr>
+          <th class="text-center">Ações</th>
+        </tr>
       </ng-template>
       <ng-template pTemplate="body" let-cust>
         <tr>
-          <td>{{ cust.name }}</td>
+          <td style="font-weight: bold; color: #fff;">{{ cust.name }}</td>
           <td>{{ cust.document }}</td>
+          <td>{{ cust.phone }}</td>
           <td><span [class]="'badge ' + cust.type">{{ cust.type }}</span></td>
-          <td>
+          <td class="text-center">
+            <button pButton icon="pi pi-pencil" 
+          pTooltip="Editar Cadastro" tooltipPosition="top"
+          class="p-button-rounded p-button-text p-button-info" 
+          (click)="editCustomer(cust)">
+  </button>
             <button pButton icon="pi pi-clock" label="Histórico" 
-                    class="p-button-sm p-button-outlined" 
+                    class="p-button-sm p-button-outlined p-button-secondary" 
                     (click)="openHistory(cust)">
             </button>
+            <button pButton icon="pi pi-file"  label="Documentos"
+          pTooltip="Ver Documentos" tooltipPosition="top"
+          class="p-button-rounded p-button-text p-button-warning" 
+          (click)="viewDocuments(cust)">
+  </button>
           </td>
         </tr>
       </ng-template>
     </p-table>
   </div>
 
-  <p-dialog header="Cadastro de Cliente" [(visible)]="displayModal" [modal]="true" [style]="{width: '600px'}">
+  <p-dialog [header]="isEditMode ? 'Editar Cliente' : 'Novo Cliente'" [(visible)]="displayModal" [modal]="true" [style]="{width: '700px'}" styleClass="custom-dialog">
     
     <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
       
       <p-tabView (onChange)="onTabChange($event)">
         
         <p-tabPanel header="Pessoa Física">
+          
+          <div class="form-section-title">Dados Pessoais</div>
+          
           <div class="form-grid">
-             <div class="field">
+             <div class="field col-12">
                <label>Nome Completo</label>
-               <input pInputText formControlName="name" class="w-full">
+               <input pInputText formControlName="name" class="w-full" placeholder="Ex: João da Silva">
              </div>
-             <div class="field">
-               <label>CPF</label>
-               <p-inputMask mask="999.999.999-99" formControlName="document" styleClass="w-full"></p-inputMask>
+
+             <div class="form-row">
+               <div class="field half">
+                 <label>CPF</label>
+                 <p-inputMask mask="999.999.999-99" formControlName="document" styleClass="w-full" placeholder="000.000.000-00"></p-inputMask>
+               </div>
+               <div class="field half">
+                 <label>Data de Nascimento</label>
+                 <p-calendar formControlName="birthDate" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full"></p-calendar>
+               </div>
              </div>
-             
-             <div class="field">
-               <label>Foto CNH</label>
-               <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*">
+
+             <div class="form-row">
+               <div class="field half">
+                 <label>Nº Registro CNH</label>
+                 <input pInputText formControlName="cnhNumber" class="w-full">
+               </div>
+               <div class="field half">
+                 <label>Telefone / Celular</label>
+                 <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full" placeholder="(00) 00000-0000"></p-inputMask>
+               </div>
+             </div>
+
+             <div class="field mt-2">
+               <input type="file" id="fileCNH" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*" hidden>
+               <label for="fileCNH" class="upload-link">
+                 <i class="pi pi-paperclip"></i> 
+                 {{ fileNameCNH ? fileNameCNH : 'Anexar Foto da CNH' }}
+                 <i *ngIf="fileNameCNH" class="pi pi-check-circle text-green-500 ml-2"></i>
+               </label>
              </div>
           </div>
         </p-tabPanel>
 
         <p-tabPanel header="Pessoa Jurídica">
+          <div class="form-section-title">Dados da Empresa</div>
           <div class="form-grid">
-             <div class="field">
+             <div class="field col-12">
                <label>Razão Social</label>
                <input pInputText formControlName="name" class="w-full">
              </div>
-             <div class="field">
-               <label>CNPJ</label>
-               <p-inputMask mask="99.999.999/9999-99" formControlName="document" styleClass="w-full"></p-inputMask>
+             <div class="form-row">
+                <div class="field half">
+                  <label>CNPJ</label>
+                  <p-inputMask mask="99.999.999/9999-99" formControlName="document" styleClass="w-full"></p-inputMask>
+                </div>
+                <div class="field half">
+                  <label>Telefone</label>
+                  <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full"></p-inputMask>
+                </div>
              </div>
           </div>
         </p-tabPanel>
       </p-tabView>
 
-      <div class="form-grid mt-3">
-        <div class="field">
-          <label>Telefone</label>
-          <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full"></p-inputMask>
-        </div>
-        <div class="field">
-          <label>Endereço</label>
-          <input pInputText formControlName="address" class="w-full">
-        </div>
+      <div class="address-section mt-4">
+        <div class="form-section-title">Endereço & Localização</div>
         
-        <div class="field">
-           <label>Comprovante de Residência</label>
-           <input type="file" (change)="onFileSelected($event, 'proofUrl')" accept="image/*">
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="field" style="width: 30%;">
+              <label>CEP</label>
+              <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-full"></p-inputMask>
+            </div>
+            <div class="field" style="width: 70%;">
+              <label>Cidade</label>
+              <input pInputText formControlName="city" class="w-full">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field" style="width: 75%;">
+              <label>Rua / Logradouro</label>
+              <input pInputText formControlName="street" class="w-full">
+            </div>
+            <div class="field" style="width: 25%;">
+              <label>Número</label>
+              <input pInputText formControlName="number" class="w-full">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Bairro</label>
+            <input pInputText formControlName="district" class="w-full">
+          </div>
+
+          <div class="field mt-2">
+             <input type="file" id="fileProof" (change)="onFileSelected($event, 'proofUrl')" accept="image/*" hidden>
+             <label for="fileProof" class="upload-link">
+               <i class="pi pi-home"></i> 
+               {{ fileNameProof ? fileNameProof : 'Anexar Comprovante de Residência' }}
+               <i *ngIf="fileNameProof" class="pi pi-check-circle text-green-500 ml-2"></i>
+             </label>
+          </div>
         </div>
       </div>
 
-      <div class="mt-4 flex justify-content-end">
-        <button pButton label="Salvar" type="submit"></button>
+      <div class="form-footer mt-5 flex justify-content-end gap-2">
+        <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
+        <button pButton [label]="isEditMode ? 'Atualizar Dados' : 'Cadastrar Cliente'" type="submit" class="p-button-primary"></button>
       </div>
     </form>
   </p-dialog>
 
-  <p-dialog header="Histórico do Cliente" [(visible)]="displayHistory" [modal]="true" [style]="{width: '500px'}">
-    <div *ngIf="historyData" class="history-content">
+ <p-dialog 
+  header="Histórico e Performance" 
+  [(visible)]="displayHistory" 
+  [modal]="true" 
+  [style]="{width: '800px'}" 
+  [draggable]="false" 
+  [resizable]="false"
+  styleClass="history-dialog">
+
+  <div *ngIf="historyData" class="history-content">
+    
+    <div class="stats-grid">
       
-      <div class="stats-row flex justify-content-between mb-3">
-        <div class="stat">
-          <span class="label">Total Gasto</span>
-          <h3 class="text-green-500">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</h3>
+      <div class="stat-card">
+        <div class="icon-box green">
+          <i class="pi pi-wallet"></i>
         </div>
-        <div class="stat">
-          <span class="label">Locações</span>
-          <h3>{{ historyData.stats.totalRentals }}</h3>
+        <div class="info">
+          <span class="label">Total Investido</span>
+          <span class="value text-green">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</span>
         </div>
       </div>
 
-      <p-table [value]="historyData.history" [rows]="5" [paginator]="true">
+      <div class="stat-card">
+        <div class="icon-box blue">
+          <i class="pi pi-shopping-bag"></i>
+        </div>
+        <div class="info">
+          <span class="label">Total de Locações</span>
+          <span class="value">{{ historyData.stats.totalRentals }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon-box yellow">
+          <i class="pi pi-calendar-clock"></i>
+        </div>
+        <div class="info">
+          <span class="label">Última Locação</span>
+          <span class="value text-sm">
+            {{ historyData.stats.lastRentalDate ? (historyData.stats.lastRentalDate | date:'dd/MM/yyyy') : 'Nunca' }}
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="history-table-wrapper mt-4">
+      <h4 class="section-title">Detalhamento das Locações</h4>
+      
+      <p-table 
+        [value]="historyData.history" 
+        [rows]="5" 
+        [paginator]="true" 
+        styleClass="p-datatable-sm">
+        
         <ng-template pTemplate="header">
           <tr>
-            <th>Data</th>
+            <th>Status</th>
+            <th>Data Retirada</th>
             <th>Carretinha</th>
-            <th>Valor</th>
+            <th>Valor Total</th>
           </tr>
         </ng-template>
+
         <ng-template pTemplate="body" let-h>
           <tr>
-            <td>{{ h.startDate | date:'dd/MM/yy' }}</td>
-            <td>{{ h.trailer?.plate }}</td>
-            <td>R$ {{ h.totalValue }}</td>
+            <td>
+              <span class="status-tag" [ngClass]="h.status === 'OPEN' ? 'open' : 'closed'">
+                {{ h.status === 'OPEN' ? 'EM ABERTO' : 'FINALIZADO' }}
+              </span>
+            </td>
+            <td>
+              <i class="pi pi-calendar mr-2 text-gray-500"></i>
+              {{ h.startDate | date:'dd/MM/yyyy' }}
+            </td>
+            <td>
+              <span class="font-bold text-white">{{ h.trailer?.plate }}</span>
+              <span class="text-xs text-gray-400 ml-2">({{ h.trailer?.model }})</span>
+            </td>
+            <td class="font-bold text-green">R$ {{ h.totalValue | number:'1.2-2' }}</td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center p-4 text-gray-500">
+              Nenhum histórico encontrado para este cliente.
+            </td>
           </tr>
         </ng-template>
       </p-table>
     </div>
-  </p-dialog>
+
+  </div>
+</p-dialog>
+
+<p-dialog 
+  [header]="'Documentos: ' + (selectedCustomerDocs?.name || '')" 
+  [(visible)]="displayDocsModal" 
+  [modal]="true" 
+  [style]="{width: '800px'}" 
+  [draggable]="false" 
+  [resizable]="false"
+  [maximizable]="true"> <div class="docs-container" *ngIf="selectedCustomerDocs">
+    
+    <div class="doc-card">
+      <div class="doc-header">
+        <i class="pi pi-id-card"></i>
+        <span>CNH / Documento</span>
+      </div>
+      <div class="doc-content">
+        <img *ngIf="selectedCustomerDocs.cnhUrl" [src]="selectedCustomerDocs.cnhUrl" alt="Foto da CNH">
+        <div *ngIf="!selectedCustomerDocs.cnhUrl" class="empty-doc">
+          <i class="pi pi-image"></i>
+          <p>Não anexado</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-card">
+      <div class="doc-header">
+        <i class="pi pi-home"></i>
+        <span>Comprovante de Residência</span>
+      </div>
+      <div class="doc-content">
+        <img *ngIf="selectedCustomerDocs.proofUrl" [src]="selectedCustomerDocs.proofUrl" alt="Comprovante">
+        <div *ngIf="!selectedCustomerDocs.proofUrl" class="empty-doc">
+          <i class="pi pi-image"></i>
+          <p>Não anexado</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</p-dialog>
 </div>

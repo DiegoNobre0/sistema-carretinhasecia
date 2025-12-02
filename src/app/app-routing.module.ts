@@ -11,6 +11,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { SenatranComponent } from './pages/senatran/senatran.component';
 import { BackupComponent } from './pages/backup/backup.component';
 import { FinancialComponent } from './pages/financial/financial.component';
+import { AgendaComponent } from './pages/agenda/agenda.component';
 
 const routes: Routes = [
   // Rota Pública (Login)
@@ -31,6 +32,7 @@ const routes: Routes = [
       { path: 'senatran', component: SenatranComponent },
       { path: 'backup', component: BackupComponent },
       { path: 'financeiro', component: FinancialComponent },
+      { path: 'agenda', component: AgendaComponent }
     ]
   },
 

@@ -1,13 +1,140 @@
-.page-container { display: flex; flex-direction: column; gap: 1rem; }
-.header-action { display: flex; justify-content: space-between; align-items: center; 
-  h1 { margin: 0; color: #fff; } .subtitle { color: #888; } }
-
-.kpi-card {
-  background: var(--bg-card); border: 1px solid #333; padding: 1.5rem; border-radius: 8px; width: 300px;
-  span { color: #888; font-size: 0.8rem; font-weight: bold; }
-  h2 { margin: 0.5rem 0 0 0; font-size: 2rem; color: #ff4444; }
+/* CORES DO TEMA DA FOTO */
+:host {
+  --bg-dark: #121524;
+  --bg-card: #1D2136;
+  --primary-yellow: #FFC107;
+  --primary-purple: #AB47BC; /* Cor do 3º card */
+  --text-gray: #8c90b0;
 }
 
-.card-table { background: var(--bg-card); border: 1px solid #333; border-radius: 8px; padding: 1rem; }
-.text-red-400 { color: #ff4444; }
-.field { margin-bottom: 1rem; label { display: block; margin-bottom: 0.5rem; color: #ccc; } }
+.page-container {
+  display: flex; flex-direction: column; gap: 2rem;
+}
+
+.header-area {
+  h1 { margin: 0; color: #fff; font-size: 1.5rem; }
+  .subtitle { color: var(--text-gray); margin-top: 0.5rem; font-size: 0.9rem; }
+}
+
+/* === KPIS (CARTÕES DO TOPO) === */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #2a2e45;
+  
+  .label { font-size: 0.7rem; font-weight: bold; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; }
+  .value { font-size: 2rem; margin: 0.5rem 0 0 0; font-weight: 800; }
+  
+  /* Cores dos Textos */
+  .text-yellow { color: var(--primary-yellow); }
+  .text-white { color: #fff; }
+  .text-purple { color: var(--primary-purple); }
+
+  /* Ícone de Fundo Transparente */
+  .icon-bg {
+    position: absolute; right: -10px; bottom: -10px;
+    font-size: 5rem; opacity: 0.05; color: #fff;
+    transform: rotate(-15deg);
+  }
+}
+
+/* === LAYOUT PRINCIPAL (FORM + LISTA) === */
+.main-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr; /* Esquerda Fixa 350px, Direita Ocupa o Resto */
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ESQUERDA: FORMULÁRIO */
+.form-panel {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #2a2e45;
+  
+  h3 { color: #fff; margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem; }
+  
+  .field { margin-bottom: 1.2rem; label { display: block; color: #ccc; margin-bottom: 0.5rem; font-size: 0.9rem; } }
+  .form-row { display: flex; gap: 1rem; .half { flex: 1; } }
+
+  .btn-submit {
+    background: var(--primary-yellow) !important;
+    color: #000 !important; /* Texto preto no amarelo */
+    font-weight: bold;
+    border: none;
+  }
+}
+
+/* DIREITA: LISTA DE SERVIÇOS */
+.history-panel {
+  display: flex; flex-direction: column; gap: 1rem;
+  
+  .panel-header { color: #fff; font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+}
+
+.history-list {
+  display: flex; flex-direction: column; gap: 1rem;
+}
+
+/* O CARD INDIVIDUAL DA LISTA (IGUAL FOTO) */
+.service-card {
+  background: var(--bg-card);
+  border: 1px solid #2a2e45;
+  border-radius: 10px;
+  padding: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.2s;
+
+  &:hover { border-color: #444; transform: translateX(5px); }
+
+  /* Seção Esquerda */
+  .card-left {
+    display: flex; align-items: center; gap: 1rem; min-width: 180px;
+    
+    .icon-box {
+      width: 40px; height: 40px; background: #2a2e45; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; color: #888;
+    }
+    .vehicle-info {
+      display: flex; flex-direction: column;
+      .plate { color: #fff; font-weight: bold; font-size: 1.1rem; }
+      .model { color: var(--text-gray); font-size: 0.8rem; }
+    }
+  }
+
+  /* Seção Central */
+  .card-center {
+    flex: 1; display: flex; flex-direction: column; padding-left: 2rem;
+    .desc-label { font-size: 0.65rem; color: #555; font-weight: bold; margin-bottom: 2px; }
+    .description { color: #ddd; font-weight: 500; font-size: 0.95rem; }
+  }
+
+  /* Seção Direita */
+  .card-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
+    .date { color: var(--text-gray); font-size: 0.8rem; }
+    .cost { color: var(--primary-yellow); font-weight: bold; font-size: 1.3rem; }
+  }
+}
+
+.empty-state { text-align: center; color: #555; padding: 2rem; }
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .main-layout { grid-template-columns: 1fr; } /* Vira uma coluna só no celular */
+  .service-card { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .card-center { padding-left: 0; }
+  .card-right { align-items: flex-start; width: 100%; flex-direction: row; justify-content: space-between; margin-top: 0.5rem; border-top: 1px solid #333; padding-top: 0.5rem; }
+}
