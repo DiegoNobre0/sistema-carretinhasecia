@@ -160,3 +160,31 @@
   background: #252836; border: 1px solid #444;
   .p-dropdown-label { color: #fff; }
 }
+
+
+/* Grid Responsivo para KPIs */
+.kpi-grid {
+  display: grid;
+  /* Desktop: 4 colunas | Mobile: O que couber (min 240px) */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+  gap: 1rem;
+}
+
+/* Grid Principal (Gráfico e Listas) */
+.main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Desktop: 2/3 e 1/3 */
+  gap: 1.5rem;
+}
+
+/* MUDANÇA PARA MOBILE */
+@media (max-width: 900px) {
+  .main-grid {
+    grid-template-columns: 1fr; /* Vira uma coluna só */
+  }
+  
+  .top-bar {
+    flex-direction: column; align-items: flex-start; gap: 1rem;
+    .filter-area { width: 100%; flex-wrap: wrap; }
+  }
+}

@@ -183,3 +183,15 @@
     .total { font-size: 1.1rem; font-weight: bold; color: #00C851; }
   }
 }
+
+.rentals-grid {
+  display: grid;
+  /* Garante que o card tenha no mínimo 300px, senão quebra linha */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Ajuste fino para celular muito pequeno */
+@media (max-width: 400px) {
+  .rentals-grid { grid-template-columns: 1fr; }
+}

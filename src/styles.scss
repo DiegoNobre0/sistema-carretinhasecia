@@ -57,3 +57,36 @@ body {
 .p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon {
     color: var(--cor-preto) !important;
 }
+
+/* --- RESPONSIVIDADE GLOBAL DE MODAIS --- */
+
+/* Por padrão, desktop usa a largura definida no componente */
+
+@media (max-width: 768px) {
+  /* No celular, força largura quase total */
+  .p-dialog {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 0 auto;
+  }
+  
+  /* Ajusta conteúdo interno */
+  .p-dialog-content {
+    padding: 1rem !important;
+  }
+
+  /* Ajusta inputs para não estourarem */
+  .p-dropdown, .p-calendar, .p-inputnumber, input {
+    width: 100% !important;
+  }
+  
+  /* Formulários em grid viram coluna */
+  .form-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .field.half {
+    width: 100% !important;
+  }
+}

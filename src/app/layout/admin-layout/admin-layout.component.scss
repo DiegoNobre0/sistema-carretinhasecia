@@ -1,143 +1,95 @@
+/* --- ESTRUTURA BASE --- */
 .layout-wrapper {
   display: flex;
   height: 100vh;
   background-color: var(--bg-dark);
-  color: var(--text-color);
-  position: relative;
-  overflow-x: hidden; /* Evita rolagem lateral no mobile */
+  color: #fff;
+  overflow: hidden; /* Impede rolagem dupla */
 }
 
-/* --- SIDEBAR PADRÃO (Desktop) --- */
+/* SIDEBAR DESKTOP */
 .sidebar {
   width: 260px;
-  background-color: var(--bg-card);
+  background-color: #1D2136; /* Cor do seu card */
   border-right: 1px solid #333;
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-  height: 100vh;
+  display: flex; flex-direction: column; padding: 1.5rem;
+  height: 100%;
+  transition: transform 0.3s ease;
   z-index: 1000;
-  transition: transform 0.3s ease-in-out;
   
-  /* Logica, Menu e Profile (Mantém igual ao anterior) */
-  .logo-area {
-    margin-bottom: 3rem;
-    text-align: center;
-    h2 { 
-      font-size: 1.4rem; text-transform: uppercase; margin: 0; color: var(--cor-branco); 
-      .highlight { color: var(--primary-color); }
-    }
+  .logo-area { margin-bottom: 2rem; text-align: center; 
+    h2 { margin: 0; font-size: 1.4rem; .highlight { color: #FFC107; } } 
   }
-
-  .menu {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    overflow-y: auto; /* Caso o menu seja muito grande */
-
-    .menu-category {
-      font-size: 0.75rem; text-transform: uppercase; color: #666; 
-      margin: 1.5rem 0 0.5rem 0.5rem; font-weight: bold; letter-spacing: 1px;
-    }
-
-    .menu-item {
-      display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1rem;
-      color: #aaa; text-decoration: none; border-radius: 8px; transition: all 0.2s; font-weight: 500;
-      i { font-size: 1.1rem; }
-
-      &:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--cor-branco); }
-      &.active {
-        background-color: var(--primary-color); color: var(--cor-preto); font-weight: 700;
-        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
-      }
-    }
+  
+  .menu { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; }
+  
+  .menu-item {
+    display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1rem;
+    color: #aaa; text-decoration: none; border-radius: 8px; transition: all 0.2s;
+    &:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    &.active { background: #FFC107; color: #000; font-weight: bold; }
   }
 
   .user-profile {
-    display: flex; align-items: center; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid #333; margin-top: auto;
-    .avatar { width: 40px; height: 40px; background-color: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
-    .info { flex: 1; display: flex; flex-direction: column; .name { font-weight: bold; color: #fff; font-size: 0.9rem; } .role { font-size: 0.75rem; color: #888; } }
-    .logout-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; transition: color 0.2s; &:hover { color: #ff4444; } }
+    border-top: 1px solid #333; padding-top: 1rem; margin-top: auto;
+    display: flex; align-items: center; gap: 1rem;
+    .avatar { width: 35px; height: 35px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .info { flex: 1; display: flex; flex-direction: column; font-size: 0.85rem; .role { font-size: 0.7rem; color: #888; } }
+    .logout-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; }
   }
 }
 
-/* Máscara escura (Fundo do mobile) */
-.sidebar-mask {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 900;
-  backdrop-filter: blur(2px);
-}
-
-/* --- ÁREA PRINCIPAL --- */
+/* CONTEÚDO PRINCIPAL */
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  display: flex; flex-direction: column;
+  height: 100%;
+  position: relative;
 }
 
-.mobile-header {
-  display: none; /* Escondido no Desktop */
-}
+.mobile-header { display: none; } /* Escondido no Desktop */
 
 .content-wrapper {
   flex: 1;
   padding: 2rem;
-  overflow-y: auto;
-  background-color: var(--bg-dark);
+  overflow-y: auto; /* Rolagem apenas aqui */
 }
 
 /* =========================================
-   RESPONSIVIDADE (Mobile e Tablets < 992px)
+   RESPONSIVIDADE (TABLET E CELULAR < 992px)
    ========================================= */
-@media screen and (max-width: 992px) {
+@media (max-width: 992px) {
   
-  /* Sidebar sai da tela (Escondida à esquerda) */
+  /* Sidebar Escondida */
   .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100%;
-    transform: translateX(-100%); /* Move para fora da tela */
-    box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+    position: fixed; top: 0; left: 0; bottom: 0;
+    transform: translateX(-100%); /* Joga pra fora da tela */
+    box-shadow: 5px 0 15px rgba(0,0,0,0.5);
   }
-
-  /* Quando ativa, ela volta para a tela */
+  
   .sidebar.mobile-active {
-    transform: translateX(0);
+    transform: translateX(0); /* Traz de volta */
   }
 
-  /* Mostra a máscara quando menu aberto */
-  .sidebar-mask.active {
-    display: block;
+  /* Máscara de Fundo */
+  .sidebar-mask {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); z-index: 900;
+    opacity: 0; visibility: hidden; transition: 0.3s;
+    &.active { opacity: 1; visibility: visible; }
   }
 
-  /* Header Mobile aparece */
+  /* Header Mobile Aparece */
   .mobile-header {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center; gap: 1rem;
     padding: 1rem;
-    background-color: var(--bg-card);
+    background-color: #1D2136;
     border-bottom: 1px solid #333;
     
-    .menu-toggle {
-      background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;
-    }
-
-    .mobile-logo {
-      margin-left: 1rem; font-weight: bold; font-size: 1.1rem; color: #fff; text-transform: uppercase;
-      .highlight { color: var(--primary-color); }
-    }
+    .menu-toggle { background: none; border: none; color: #fff; font-size: 1.5rem; }
+    .mobile-logo { font-weight: bold; font-size: 1.2rem; .highlight { color: #FFC107; } }
   }
 
-  /* Ajusta padding do conteúdo no mobile */
-  .content-wrapper {
-    padding: 1rem;
-  }
+  /* Ajuste de Padding do Conteúdo */
+  .content-wrapper { padding: 1rem; }
 }
