@@ -1,1 +1,59 @@
-/* You can add global styles to this file, and also import other style files */
+/* frontend/src/styles.scss */
+:root {
+  /* Sua Paleta Personalizada */
+  --cor-preto: #121212;
+  --cor-amarelo-destaque: #FFC107;
+  --cor-branco: #FFFFFF;
+  --cor-cinza-texto: #333333;
+  --cor-cinza-fundo: #f8f9fa;
+
+  /* Mapeamento para o Sistema */
+  --primary-color: var(--cor-amarelo-destaque);
+  --bg-dark: var(--cor-preto);
+  --bg-card: #1E1E1E; /* Um tom levemente mais claro que o preto para destacar o cartão */
+  --input-bg: var(--cor-cinza-texto);
+  --text-color: var(--cor-branco);
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- OVERRIDES DO PRIMENG (Adaptação para sua marca) --- */
+
+/* Inputs: Fundo Cinza Escuro (#333333) com texto Branco */
+.p-inputtext {
+  background-color: var(--input-bg) !important;
+  border: 1px solid #444 !important;
+  color: var(--cor-branco) !important;
+}
+
+.p-inputtext:focus {
+  border-color: var(--primary-color) !important; /* Borda amarela ao clicar */
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.2) !important;
+}
+
+/* Botão Primário: Amarelo com texto Preto (Contraste Máximo) */
+.p-button-primary {
+  background: var(--primary-color) !important;
+  border: 1px solid var(--primary-color) !important;
+  color: var(--cor-preto) !important; /* Texto preto no fundo amarelo */
+  font-weight: 700 !important; /* Negrito */
+}
+
+.p-button-primary:hover {
+  filter: brightness(0.9); /* Leve escurecida ao passar o mouse */
+}
+
+/* Checkbox */
+.p-checkbox .p-checkbox-box.p-highlight {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+.p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon {
+    color: var(--cor-preto) !important;
+}

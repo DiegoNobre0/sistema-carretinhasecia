@@ -1,0 +1,68 @@
+<div class="page-container">
+
+  <div class="header-action">
+    <div>
+      <h1>Carretinhas Disponíveis</h1>
+      <p class="subtitle">Gerencie sua frota para locação.</p>
+    </div>
+    <button pButton label="+ Nova Carretinha" class="p-button-primary" (click)="showDialog()">
+    </button>
+  </div>
+
+  <div *ngIf="trailers.length === 0" class="empty-state">
+    <p>Nenhuma carretinha cadastrada ainda.</p>
+  </div>
+
+  <div class="grid-cards">
+    <div class="card-trailer" *ngFor="let item of trailers">
+      <div class="card-img">
+        <i class="pi pi-image" *ngIf="!item.photoUrl"></i>
+        <img [src]="item.photoUrl" *ngIf="item.photoUrl" alt="Foto da carretinha">
+      </div>
+      <div class="card-info">
+        <h3>{{ item.plate }}</h3>
+        <span class="model">{{ item.model }}</span>
+        <div class="tag">{{ item.size }}</div>
+      </div>
+    </div>
+  </div>
+
+  <p-dialog header="Cadastrar Nova Carretinha" [(visible)]="displayModal" [modal]="true" [style]="{width: '400px'}"
+    [draggable]="false" [resizable]="false">
+
+    <form [formGroup]="trailerForm" (ngSubmit)="onSubmit()" class="form-grid">
+
+      <div class="field">
+        <label>Placa</label>
+        <input pInputText formControlName="plate" placeholder="Ex: BRA-2025" class="w-full">
+      </div>
+
+      <div class="field">
+        <label>Modelo</label>
+        <input pInputText formControlName="model" placeholder="Ex: Fazendinha" class="w-full">
+      </div>
+
+      <div class="field">
+        <label>Tamanho</label>
+        <input pInputText formControlName="size" placeholder="Ex: 2.00 x 1.20" class="w-full">
+      </div>
+
+      <div class="field">
+        <label>Foto da Carretinha</label>
+        <div class="flex align-items-center gap-3">
+          <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full">
+
+          <img *ngIf="trailerForm.get('photoUrl')?.value" [src]="trailerForm.get('photoUrl')?.value"
+            style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
+        </div>
+      </div>
+
+      <div class="form-footer mt-4 flex justify-content-end gap-2">
+        <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
+        <button pButton label="Salvar" type="submit" class="p-button-primary"></button>
+      </div>
+
+    </form>
+  </p-dialog>
+
+</div>

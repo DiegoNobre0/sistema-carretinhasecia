@@ -1,0 +1,77 @@
+/* frontend/src/app/pages/login/login.component.scss */
+.login-container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-dark); /* Fundo #121212 */
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem;
+  background-color: var(--bg-card); /* Fundo do cartão levemente destacado */
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Sombra para destacar do fundo */
+  border: 1px solid #333; /* Borda sutil */
+  
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: var(--cor-branco);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      
+      .highlight {
+        color: var(--primary-color); /* "e Cia" em Amarelo */
+      }
+    }
+    
+    .subtitle {
+      color: #888;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      margin-top: 0.8rem;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--primary-color); /* Linha amarela decorativa */
+      display: inline-block;
+      padding-bottom: 5px;
+    }
+  }
+
+  .field {
+    margin-bottom: 1.5rem;
+    
+    label {
+      display: block;
+      color: #ccc;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    
+    i {
+        color: #888; /* Ícone dentro do input */
+        z-index: 1;
+    }
+  }
+
+  .field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    
+    label {
+        color: #ccc;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+  }
+}

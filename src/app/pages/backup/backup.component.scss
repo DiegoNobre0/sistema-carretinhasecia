@@ -1,0 +1,42 @@
+.page-container {
+  display: flex; flex-direction: column; gap: 2rem;
+  max-width: 800px; margin: 0 auto; /* Centralizado */
+}
+
+.header-action {
+  text-align: center;
+  h1 { margin: 0; color: #fff; } .subtitle { color: #888; margin-top: 0.5rem; }
+}
+
+.backup-card {
+  background: var(--bg-card);
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  
+  .icon-area {
+    font-size: 8rem; color: var(--primary-color);
+    opacity: 0.8;
+  }
+
+  .content-area {
+    flex: 1;
+    h2 { color: #fff; margin-top: 0; }
+    p { color: #aaa; line-height: 1.6; }
+    
+    .info-box {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem; border-radius: 6px; margin-top: 1.5rem;
+      display: flex; gap: 0.8rem; align-items: center; color: #ccc;
+      i { color: var(--primary-color); }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .backup-card { flex-direction: column; text-align: center; padding: 1.5rem; gap: 1.5rem; }
+  .icon-area { font-size: 5rem; }
+}

@@ -1,0 +1,83 @@
+<div class="layout-wrapper">
+
+  <div class="sidebar-mask" [class.active]="isMobileMenuOpen" (click)="closeMenu()">
+  </div>
+
+  <aside class="sidebar" [class.mobile-active]="isMobileMenuOpen">
+    <div class="logo-area">
+      <h2>Carretinha <span class="highlight">e Cia</span></h2>
+    </div>
+
+    <nav class="menu">
+      <a routerLink="/dashboard/home" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-home"></i>
+        <span>Início</span>
+      </a>
+
+      <div class="menu-category">OPERACIONAL</div>
+
+      <a routerLink="/dashboard/locacoes" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-calendar-plus"></i>
+        <span>Locações</span>
+      </a>
+
+      <a routerLink="/dashboard/clientes" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-users"></i>
+        <span>Clientes</span>
+      </a>
+
+      <a routerLink="/dashboard/carretinhas" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-truck"></i>
+        <span>Carretinhas</span>
+      </a>
+
+      <a routerLink="/dashboard/senatran" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-id-card"></i>
+        <span>Portal Senatran</span>
+      </a>
+
+      <div class="menu-category">GESTÃO</div>
+
+      <a routerLink="/dashboard/financeiro" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-dollar"></i>
+        <span>Financeiro</span>
+      </a>
+
+      <a routerLink="/dashboard/manutencao" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-cog"></i>
+        <span>Manutenção</span>
+      </a>
+
+      <a routerLink="/dashboard/backup" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+        <i class="pi pi-database"></i>
+        <span>Backup</span>
+      </a>
+    </nav>
+
+    <div class="user-profile">
+      <div class="avatar"><i class="pi pi-user"></i></div>
+      <div class="info">
+        <span class="name">Admin</span>
+        <span class="role">Gerente</span>
+      </div>
+      <button class="logout-btn" (click)="onLogout()" title="Sair do sistema">
+        <i class="pi pi-sign-out"></i>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="mobile-header">
+      <button class="menu-toggle" (click)="toggleMenu()">
+        <i class="pi pi-bars"></i>
+      </button>
+      <span class="mobile-logo">Carretinha <span class="highlight">e Cia</span></span>
+    </header>
+
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+</div>

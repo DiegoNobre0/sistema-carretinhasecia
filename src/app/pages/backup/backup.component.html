@@ -1,0 +1,40 @@
+<p-toast></p-toast>
+
+<div class="page-container">
+  
+  <div class="header-action">
+    <div>
+      <h1>Backup e Segurança</h1>
+      <p class="subtitle">Exporte seus dados para segurança local.</p>
+    </div>
+  </div>
+
+  <div class="backup-card">
+    <div class="icon-area">
+      <i class="pi pi-cloud-download"></i>
+    </div>
+    
+    <div class="content-area">
+      <h2>Exportar Dados Completos</h2>
+      <p>
+        Gere um arquivo contendo todos os clientes, carretinhas, locações e histórico de manutenção.
+        Guarde este arquivo em um local seguro (Pen drive ou Nuvem).
+      </p>
+
+      <div class="info-box">
+        <i class="pi pi-info-circle"></i>
+        <span>Isso gera um arquivo <strong>.json</strong> compatível para restauração futura.</span>
+      </div>
+
+      <button 
+        pButton 
+        label="Baixar Backup Agora" 
+        icon="pi pi-download" 
+        class="p-button-lg p-button-warning mt-4 w-full"
+        [loading]="loading"
+        (click)="onExport()">
+      </button>
+    </div>
+  </div>
+
+</div>

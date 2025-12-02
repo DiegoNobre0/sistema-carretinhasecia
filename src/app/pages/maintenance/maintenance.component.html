@@ -1,0 +1,82 @@
+<div class="page-container">
+  
+  <div class="header-action">
+    <div>
+      <h1>Manutenção</h1>
+      <p class="subtitle">Controle de oficinas e custos de reparo.</p>
+    </div>
+    <button pButton label="+ Nova Manutenção" class="p-button-danger" (click)="showDialog()"></button>
+  </div>
+
+  <div class="kpi-card">
+    <span>CUSTO TOTAL EM MANUTENÇÃO</span>
+    <h2 class="text-red-500">R$ {{ totalCost | number:'1.2-2' }}</h2>
+  </div>
+
+  <div class="card-table mt-4">
+    <p-table [value]="maintenances" [tableStyle]="{'min-width': '50rem'}" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Carretinha</th>
+          <th>Serviço</th>
+          <th>Oficina</th>
+          <th>Data</th>
+          <th>Custo</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td class="font-bold">{{ item.trailer?.plate }}</td>
+          <td>{{ item.description }}</td>
+          <td>{{ item.workshop || '-' }}</td>
+          <td>{{ item.date | date:'dd/MM/yy' }}</td>
+          <td class="text-red-400 font-bold">R$ {{ item.cost | number:'1.2-2' }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5" class="text-center">Nenhum registro de manutenção.</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog header="Registrar Manutenção" [(visible)]="displayModal" [modal]="true" [style]="{width: '450px'}">
+    <form [formGroup]="maintenanceForm" (ngSubmit)="onSubmit()" class="form-grid">
+      
+      <div class="field">
+        <label>Carretinha (Disponíveis)</label>
+        <p-dropdown 
+          [options]="availableTrailers" 
+          optionLabel="plate" 
+          optionValue="id"
+          formControlName="trailerId" 
+          placeholder="Selecione a carretinha..."
+          styleClass="w-full"
+          emptyMessage="Nenhuma carretinha disponível.">
+        </p-dropdown>
+      </div>
+
+      <div class="field">
+        <label>Descrição do Serviço</label>
+        <textarea pInputTextarea formControlName="description" rows="3" class="w-full" placeholder="Ex: Troca de rolamento..."></textarea>
+      </div>
+
+      <div class="form-row flex gap-3">
+        <div class="field flex-1">
+          <label>Custo (R$)</label>
+          <p-inputNumber formControlName="cost" mode="currency" currency="BRL" locale="pt-BR" placeholder="R$ 0,00"></p-inputNumber>
+        </div>
+        <div class="field flex-1">
+          <label>Oficina (Opcional)</label>
+          <input pInputText formControlName="workshop" class="w-full">
+        </div>
+      </div>
+
+      <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
+        <button pButton label="Registrar" type="submit" class="p-button-danger"></button>
+      </div>
+
+    </form>
+  </p-dialog>
+
+</div>

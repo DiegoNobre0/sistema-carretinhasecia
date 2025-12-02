@@ -1,0 +1,113 @@
+<p-toast></p-toast>
+
+<div class="page-container">
+  
+  <div class="header-action">
+    <div>
+      <h1>Indicação de Condutor (Senatran)</h1>
+      <p class="subtitle">Assistente de integração com Portal Gov.br.</p>
+    </div>
+    <button 
+      pButton 
+      label="Abrir Portal Gov.br" 
+      icon="pi pi-external-link" 
+      class="p-button-outlined"
+      (click)="openGovSite()">
+    </button>
+  </div>
+
+  <div class="grid-layout">
+    
+    <div class="selectors-panel card-dark">
+      <h3>1. Selecione os Dados</h3>
+      
+      <div class="field">
+        <label>Selecione o Cliente (Condutor)</label>
+        <p-dropdown 
+          [options]="customers" 
+          [(ngModel)]="selectedCustomer" 
+          optionLabel="name" 
+          placeholder="Buscar cliente..." 
+          [filter]="true"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+
+      <div class="field mt-3">
+        <label>Selecione a Carretinha</label>
+        <p-dropdown 
+          [options]="trailers" 
+          [(ngModel)]="selectedTrailer" 
+          optionLabel="plate" 
+          placeholder="Buscar carretinha..." 
+          [filter]="true"
+          styleClass="w-full">
+          <ng-template let-item pTemplate="item">
+            <span>{{ item.plate }} - {{ item.model }}</span>
+          </ng-template>
+        </p-dropdown>
+      </div>
+
+      <div class="instructions mt-4">
+        <h4><i class="pi pi-info-circle"></i> Instruções:</h4>
+        <ol>
+          <li>Selecione o cliente e o veículo acima.</li>
+          <li>Clique em "Copiar" nos cartões ao lado.</li>
+          <li>Clique em "Abrir Portal Gov.br".</li>
+          <li>No site, vá em "Meus Veículos" > "Indicação de Condutor".</li>
+          <li>Cole os dados (Ctrl + V) nos campos solicitados.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="data-panel">
+      
+      <div class="data-card" [class.disabled]="!selectedCustomer">
+        <div class="info">
+          <span class="label">CPF DO CONDUTOR</span>
+          <span class="value">{{ selectedCustomer?.document || '---' }}</span>
+        </div>
+        <button 
+          pButton 
+          icon="pi pi-copy" 
+          label="Copiar" 
+          class="p-button-rounded p-button-success"
+          (click)="copyToClipboard(selectedCustomer?.document, 'CPF')"
+          [disabled]="!selectedCustomer">
+        </button>
+      </div>
+
+      <div class="data-card" [class.disabled]="!selectedCustomer">
+        <div class="info">
+          <span class="label">NOME DO CONDUTOR</span>
+          <span class="value">{{ selectedCustomer?.name || '---' }}</span>
+        </div>
+        <button 
+          pButton 
+          icon="pi pi-copy" 
+          label="Copiar" 
+          class="p-button-rounded p-button-success"
+          (click)="copyToClipboard(selectedCustomer?.name, 'Nome')"
+          [disabled]="!selectedCustomer">
+        </button>
+      </div>
+
+      <div class="data-card" [class.disabled]="!selectedTrailer">
+        <div class="info">
+          <span class="label">PLACA DO VEÍCULO</span>
+          <span class="value">{{ selectedTrailer?.plate || '---' }}</span>
+        </div>
+        <button 
+          pButton 
+          icon="pi pi-copy" 
+          label="Copiar" 
+          class="p-button-rounded p-button-success"
+          (click)="copyToClipboard(selectedTrailer?.plate, 'Placa')"
+          [disabled]="!selectedTrailer">
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

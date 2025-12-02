@@ -1,0 +1,49 @@
+.page-container {
+  display: flex; flex-direction: column; gap: 2rem;
+}
+
+.header-action {
+  display: flex; justify-content: space-between; align-items: center;
+  h1 { margin: 0; font-size: 1.5rem; color: #fff; }
+  .subtitle { color: #888; margin: 0; }
+}
+
+.card-table {
+  background: var(--bg-card);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.text-green { color: #00C851; }
+
+/* Estilo do Resumo (Caixa Amarela/Cinza) */
+.resumo-box {
+  background: rgba(255, 193, 7, 0.1); /* Fundo amarelo bem suave */
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+
+  h4 { margin: 0 0 0.5rem 0; color: var(--primary-color); font-size: 0.8rem; letter-spacing: 1px; }
+
+  .resumo-row {
+    display: flex; justify-content: space-between;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    color: #ccc;
+    
+    &.total {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      color: #fff;
+      strong { color: var(--primary-color); }
+    }
+  }
+}
+
+.form-row { display: flex; gap: 1rem; .half { flex: 1; } }
+.field { margin-bottom: 1rem; label { display: block; margin-bottom: 0.5rem; color: #ccc; } }

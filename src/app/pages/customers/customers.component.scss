@@ -1,0 +1,36 @@
+.page-container {
+  display: flex; flex-direction: column; gap: 2rem;
+}
+
+.header-action {
+  display: flex; justify-content: space-between; align-items: center;
+  h1 { margin: 0; font-size: 1.5rem; color: #fff; }
+  .subtitle { color: #888; margin: 0; }
+}
+
+.card-table {
+  background: var(--bg-card);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+/* Badge de Tipo (PF/PJ) */
+.badge {
+  padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;
+  &.PF { background: #33b5e5; color: #fff; }
+  &.PJ { background: #FFC107; color: #000; }
+}
+
+/* Forms */
+.form-grid {
+  display: flex; flex-direction: column; gap: 1rem;
+}
+
+.form-row {
+  display: flex; gap: 1rem;
+  .half { flex: 1; }
+}
+
+label { display: block; margin-bottom: 0.5rem; color: #ccc; }

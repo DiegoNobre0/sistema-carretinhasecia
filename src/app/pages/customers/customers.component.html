@@ -1,0 +1,124 @@
+<div class="page-container">
+  <div class="header-action">
+    <h1>Gestão de Clientes</h1>
+    <button pButton label="+ Novo Cliente" (click)="showDialog()"></button>
+  </div>
+
+  <div class="card-table">
+    <p-table [value]="customers">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nome</th>
+          <th>Doc</th>
+          <th>Tipo</th>
+          <th>Ações</th> </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-cust>
+        <tr>
+          <td>{{ cust.name }}</td>
+          <td>{{ cust.document }}</td>
+          <td><span [class]="'badge ' + cust.type">{{ cust.type }}</span></td>
+          <td>
+            <button pButton icon="pi pi-clock" label="Histórico" 
+                    class="p-button-sm p-button-outlined" 
+                    (click)="openHistory(cust)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog header="Cadastro de Cliente" [(visible)]="displayModal" [modal]="true" [style]="{width: '600px'}">
+    
+    <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+      
+      <p-tabView (onChange)="onTabChange($event)">
+        
+        <p-tabPanel header="Pessoa Física">
+          <div class="form-grid">
+             <div class="field">
+               <label>Nome Completo</label>
+               <input pInputText formControlName="name" class="w-full">
+             </div>
+             <div class="field">
+               <label>CPF</label>
+               <p-inputMask mask="999.999.999-99" formControlName="document" styleClass="w-full"></p-inputMask>
+             </div>
+             
+             <div class="field">
+               <label>Foto CNH</label>
+               <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*">
+             </div>
+          </div>
+        </p-tabPanel>
+
+        <p-tabPanel header="Pessoa Jurídica">
+          <div class="form-grid">
+             <div class="field">
+               <label>Razão Social</label>
+               <input pInputText formControlName="name" class="w-full">
+             </div>
+             <div class="field">
+               <label>CNPJ</label>
+               <p-inputMask mask="99.999.999/9999-99" formControlName="document" styleClass="w-full"></p-inputMask>
+             </div>
+          </div>
+        </p-tabPanel>
+      </p-tabView>
+
+      <div class="form-grid mt-3">
+        <div class="field">
+          <label>Telefone</label>
+          <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full"></p-inputMask>
+        </div>
+        <div class="field">
+          <label>Endereço</label>
+          <input pInputText formControlName="address" class="w-full">
+        </div>
+        
+        <div class="field">
+           <label>Comprovante de Residência</label>
+           <input type="file" (change)="onFileSelected($event, 'proofUrl')" accept="image/*">
+        </div>
+      </div>
+
+      <div class="mt-4 flex justify-content-end">
+        <button pButton label="Salvar" type="submit"></button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-dialog header="Histórico do Cliente" [(visible)]="displayHistory" [modal]="true" [style]="{width: '500px'}">
+    <div *ngIf="historyData" class="history-content">
+      
+      <div class="stats-row flex justify-content-between mb-3">
+        <div class="stat">
+          <span class="label">Total Gasto</span>
+          <h3 class="text-green-500">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</h3>
+        </div>
+        <div class="stat">
+          <span class="label">Locações</span>
+          <h3>{{ historyData.stats.totalRentals }}</h3>
+        </div>
+      </div>
+
+      <p-table [value]="historyData.history" [rows]="5" [paginator]="true">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Data</th>
+            <th>Carretinha</th>
+            <th>Valor</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-h>
+          <tr>
+            <td>{{ h.startDate | date:'dd/MM/yy' }}</td>
+            <td>{{ h.trailer?.plate }}</td>
+            <td>R$ {{ h.totalValue }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-dialog>
+</div>

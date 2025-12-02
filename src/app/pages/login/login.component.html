@@ -1,0 +1,50 @@
+<div class="login-container">
+  <div class="login-card">
+    
+    <div class="header">
+      <h1>Carretinha <span class="highlight">e Cia</span></h1>
+      <p class="subtitle">AUTENTICAÇÃO SEGURA E PROFISSIONAL</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      
+      <div class="field">
+        <label for="email">E-mail</label>
+        <div class="p-input-icon-left w-full">
+          <i class="pi pi-envelope"></i>
+          <input 
+            id="email" 
+            type="email" 
+            pInputText 
+            formControlName="email" 
+            class="w-full" 
+            placeholder="admin@admin.com">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <p-password 
+          id="password" 
+          formControlName="password" 
+          [feedback]="false" 
+          styleClass="w-full" 
+          inputStyleClass="w-full"
+          placeholder="........"> </p-password>
+      </div>
+
+      <div class="field-checkbox">
+        <p-checkbox formControlName="remember" [binary]="true" inputId="remember"></p-checkbox>
+        <label for="remember">Lembrar-me</label>
+      </div>
+
+      <button 
+        pButton 
+        type="submit" 
+        label="Entrar" 
+        class="w-full p-button-primary mt-3">
+      </button>
+
+    </form>
+  </div>
+</div>
