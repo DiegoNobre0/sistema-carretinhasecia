@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environment/environment';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class CustomerService {
-  private apiUrl = 'http://localhost:3333/customers'; // Porta 3333
+
+   private api = environment.apiUrl; 
+      // Monta a rota específica
+    private apiUrl = `${this.api}/customers`;
+  
 
   constructor(private http: HttpClient) {}
 

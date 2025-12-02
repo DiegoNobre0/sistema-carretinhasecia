@@ -10,58 +10,218 @@ import * as pdfFonts from "pdfmake/build/vfs_fonts";
 })
 export class PdfService {
 
+// Função auxiliar para formatar dinheiro (R$)
+  private formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  }
+
+  // Função auxiliar para formatar data (dd/mm/aaaa)
+  private formatDate(dateStr: string | Date): string {
+    if (!dateStr) return '___/___/____';
+    return new Date(dateStr).toLocaleDateString('pt-BR');
+  }
+
   generateContract(rental: any) {
+    // Dados para preencher o contrato
+    const cliente = rental.customer || {};
+    const carro = rental.trailer || {};
+    const totalDias = Math.ceil((new Date(rental.expectedEndDate).getTime() - new Date(rental.startDate).getTime()) / (1000 * 60 * 60 * 24)) || 1;
+
     const docDefinition: any = {
       content: [
-        { text: 'CONTRATO DE LOCAÇÃO', style: 'header', alignment: 'center', margin: [0, 0, 0, 20] },
-        
-        // Dados Dinâmicos do Cliente e Locador [cite: 155-163]
-        { 
+        // TÍTULO
+        { text: 'INSTRUMENTO PARTICULAR DE CONTRATO DE LOCAÇÃO DE VEÍCULOS', style: 'header', alignment: 'center', margin: [0, 0, 0, 20] },
+
+        // PREÂMBULO (QUALIFICAÇÃO DAS PARTES)
+        {
           text: [
-            { text: 'LOCADOR: ', bold: true },
-            'CARRETINHA E CIA SYSTEMS LTDA.\n',
-            { text: 'LOCATÁRIO: ', bold: true },
-            `${rental.customer.name.toUpperCase()} (Doc: ${rental.customer.document})\n`,
-            { text: 'ENDEREÇO: ', bold: true },
-            `${rental.customer.address || 'Não informado'}\n`
+            'Pelo presente Instrumento Particular de Contrato de Locação de Veículo e na melhor forma de direito, de um lado, a empresa ',
+            { text: 'C&C COMERCIO E LOCADORA LTDA', bold: true },
+            ', CNPJ 34.607.144/0001-22 com sede na AV. Vinte e Oito de Setembro, nº 1246, Triângulo, Camaçari-BA, CEP 42803-886, neste ato representado por Yara Ellen S. Dias, brasileira, empresária, portador do CPF 863.695.495-92, residente e domiciliado nesta capital, de ora em diante denominado LOCADOR, e de outro ',
+            { text: cliente.name?.toUpperCase() || '__________________', bold: true },
+            ', portador do documento nº ',
+            { text: cliente.document || '__________________', bold: true },
+            ', residente e domiciliado a ',
+            { text: cliente.address || 'Endereço não informado', bold: true },
+            ', doravante denominado(a) LOCATÁRIO(A), tem entre si, certo e ajustado o presente, o qual se regera pelas CLÁUSULAS e condições que a seguir se aduzem com inteira submissão as disposições legais e regulamentares atinentes a espécie.'
           ],
+          style: 'justifyText',
           margin: [0, 0, 0, 15]
         },
 
-        // Objeto e Prazos [cite: 170-173]
-        { text: 'DO OBJETO E PRAZO', style: 'subheader' },
+        // CLÁUSULA PRIMEIRA - DO OBJETO
+        { text: 'CLÁUSULA PRIMEIRA - DO OBJETO', style: 'sectionHeader' },
         {
-          ul: [
-            `Carretinha: ${rental.trailer.plate} - ${rental.trailer.model}`,
-            `Retirada: ${new Date(rental.startDate).toLocaleDateString('pt-BR')}`,
-            `Devolução Prevista: ${new Date(rental.expectedEndDate).toLocaleDateString('pt-BR')}`,
-            { text: `VALOR TOTAL: R$ ${rental.totalValue.toFixed(2)}`, bold: true }
+          text: [
+            'Constitui objeto do presente Contrato o aluguel de: 1) ',
+            { text: `Reboque/Carretinha Modelo ${carro.model || ''}, Placa (${carro.plate || ''}), Tamanho ${carro.size || ''}`, bold: true },
+            '; de propriedade, posse, uso ou gozo do Locador, pelo Locatário por prazo determinado, para uso exclusivo em território nacional, observado os termos e limites de utilização ora fixados e demais disposições aplicáveis.\n\n',
+            'O Veículo locado não poderá ser objeto de uso inadequado, assim considerado, sem prejuízo de outras formas mais que poderão assim ser reconhecidos: i) Transporte de pessoas e cargas mediante remuneração; ii) Transporte de bens além da capacidade informada pelo fabricante; iii) Transporte de explosivos, combustíveis e/ou materiais químicos; iv) utilizar o veículo como guincho; v) Utilizar em corridas, testes, competições; vi) Uso indevido por pessoas não habilitadas. Trafegar com instrumentos de advertência, como luzes de sinalização, ocasionarão danos ao veículo, os quais serão identificados por meio de laudo técnico.'
           ],
-          margin: [0, 5, 0, 15]
+          style: 'justifyText',
+          margin: [0, 5, 0, 10]
         },
 
-        // Cláusulas
-        { text: 'CLÁUSULAS GERAIS', style: 'subheader' },
-        { 
-          text: '1. O LOCATÁRIO responsabiliza-se por quaisquer danos ou multas durante o período.\n2. Atrasos serão cobrados conforme tabela vigente.',
-          fontSize: 10, margin: [0, 5, 0, 30]
+        // CLÁUSULA SEGUNDA - PRAZO
+        { text: 'CLÁUSULA SEGUNDA - PRAZO', style: 'sectionHeader' },
+        {
+          text: '2.1 O período mínimo considerado para a devolução do veículo é de 1 (uma) diária com período de 24 horas.\n' +
+                '2.2 O Cliente terá o prazo de tolerância de 12 (doze) horas para retirar o veículo.\n' +
+                '2.3 Haverá tolerância de 1 (uma) hora para a devolução do veículo.\n' +
+                '2.4 Caso o veículo seja devolvido após a data e horário previsto, serão cobradas horas extras no valor de 1/3 da diária até o limite de 3 horas.\n' +
+                '2.5 A prorrogação do aluguel dependerá de comunicação prévia de no mínimo 24 horas.\n' +
+                '2.6 O prazo de aluguel está previsto neste CONTRATO. Caso o cliente opte por permanecer, deverá assinar novo contrato.\n' +
+                '2.8 O Cliente responsabiliza-se pelas despesas de retirada do veículo.\n' +
+                '2.9 O Locador entregará o veículo em perfeitas condições, devendo o Locatário devolver nas mesmas condições.',
+          style: 'justifyText',
+          margin: [0, 5, 0, 10]
         },
 
-        // Assinaturas
-        { text: `Data: ${new Date().toLocaleDateString('pt-BR')}`, alignment: 'right', margin: [0, 0, 0, 40] },
+        // CLÁUSULA TERCEIRA – DO VALOR
+        { text: 'CLÁUSULA TERCEIRA – DO VALOR DO ALUGUEL', style: 'sectionHeader' },
+        {
+          text: [
+            '3.1 O valor da diária será de ',
+            { text: this.formatCurrency(rental.dailyRate || 0), bold: true },
+            ', sendo o valor total do aluguel condicionado a assinatura e condições do presente Contrato, compreendendo o somatório dos valores compostos na tarifa vigente.\n',
+            '3.2 O Locador poderá exigir do Cliente o pagamento de caução, que será restituído após a devolução do veículo.'
+          ],
+          style: 'justifyText',
+          margin: [0, 5, 0, 10]
+        },
+
+        // CLÁUSULA QUARTA - OBRIGAÇÕES
+        { text: 'CLÁUSULA QUARTA - DAS OBRIGAÇÕES DO LOCATÁRIO', style: 'sectionHeader' },
+        {
+          text: '4.1 Permitir ao LOCADOR o livre acesso para fiscalização.\n' +
+                '4.2 O LOCATÁRIO obriga-se a colocar motoristas habilitados.\n' +
+                '4.3 Arcar com o pagamento de todas as multas e penalidades de trânsito.\n' +
+                '4.4 Providenciar Boletim de Ocorrência Policial em casos de acidentes ou roubo.\n' +
+                '4.6 Arcar com as despesas de pintura, conserto de pneus e câmara de ar.\n' +
+                '4.7 Executar a manutenção preventiva e corretiva de acordo com o fabricante.\n' +
+                '4.8 Fornecer estacionamento adequado ao veículo.',
+          style: 'justifyText',
+          margin: [0, 5, 0, 10]
+        },
+
+        // CLÁUSULA QUINTA - FISCALIZAÇÃO
+        { text: 'CLÁUSULA QUINTA - DO ACOMPANHAMENTO E FISCALIZAÇÃO', style: 'sectionHeader' },
+        {
+          text: '5.1 O LOCATÁRIO tem direito de vistoriar o veículo no recebimento.\n' +
+                '5.2 O LOCADOR poderá acompanhar e fiscalizar a utilização do veículo.\n' +
+                '5.2.1 O LOCATÁRIO arcará com todos os danos causados por uso em condições anormais.',
+          style: 'justifyText',
+          margin: [0, 5, 0, 10]
+        },
+
+        // CLÁUSULA SEXTA - PRAZO E VIGÊNCIA (DATAS REAIS)
+        { text: 'CLÁUSULA SEXTA - DO PRAZO DE LOCAÇÃO E VIGÊNCIA', style: 'sectionHeader' },
+        {
+          text: [
+            '6.1 O presente Contrato vigerá por um período de ',
+            { text: `(${totalDias}) diárias`, bold: true },
+            ', com início em ',
+            { text: this.formatDate(rental.startDate), bold: true },
+            ' e término em ',
+            { text: this.formatDate(rental.expectedEndDate), bold: true },
+            ', podendo ser prorrogado por acordo entre as partes.'
+          ],
+          style: 'justifyText',
+          margin: [0, 5, 0, 10]
+        },
+
+        // CLÁUSULA SÉTIMA A NONA (Padrão)
+        { text: 'CLÁUSULA SÉTIMA - DO FATURAMENTO E PAGAMENTO', style: 'sectionHeader' },
+        { text: '7.1 A Fatura será emitida na data de abertura. 7.2 Atrasos terão multa de 10% e juros de 5% ao mês.', style: 'justifyText', margin: [0, 5, 0, 5] },
+
+        { text: 'CLÁUSULA OITAVA - DA CONFIDENCIALIDADE', style: 'sectionHeader' },
+        { text: '8.1 Dados e informações serão tratados como estritamente confidenciais.', style: 'justifyText', margin: [0, 5, 0, 5] },
+
+        { text: 'CLÁUSULA NONA - DA RESCISÃO', style: 'sectionHeader' },
+        { text: '9.1 O contrato poderá ser rescindido mediante notificação de 48h. 9.2 O descumprimento de cláusulas gera rescisão.', style: 'justifyText', margin: [0, 5, 0, 10] },
+
+        // CLÁUSULA DÉCIMA - VALOR CONTRATUAL (VALOR REAL)
+        { text: 'CLÁUSULA DÉCIMA - DO VALOR CONTRATUAL', style: 'sectionHeader' },
+        {
+          text: [
+            '10.1 Dá-se ao presente Contrato para os efeitos legais, o valor estimado de ',
+            { text: this.formatCurrency(rental.totalValue || 0), bold: true },
+            ' conforme período de locação observado no item 6.1 do presente contrato.'
+          ],
+          style: 'justifyText',
+          margin: [0, 5, 0, 10]
+        },
+
+        // CLÁUSULA DÉCIMA PRIMEIRA - FORO
+        { text: 'CLÁUSULA DÉCIMA PRIMEIRA - DO FORO', style: 'sectionHeader' },
+        {
+          text: '11.1 - Fica eleito o Foro da Comarca de Camaçari como o único competente para a solução de questões oriundas do presente Contrato.',
+          style: 'justifyText',
+          margin: [0, 5, 0, 20]
+        },
+
+        // FECHAMENTO
+        {
+          text: `Camaçari - BA, ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+          alignment: 'right',
+          margin: [0, 0, 0, 40]
+        },
+
+        // ASSINATURAS
         {
           columns: [
-            { stack: [{ text: '__________________________', alignment: 'center' }, { text: 'Carretinha e Cia', alignment: 'center', fontSize: 9 }] },
-            { stack: [{ text: '__________________________', alignment: 'center' }, { text: 'Locatário', alignment: 'center', fontSize: 9 }] }
+            {
+              stack: [
+                { text: '_____________________________________', alignment: 'center' },
+                { text: 'C&C COMERCIO E LOCADORA\n(LOCADOR)', alignment: 'center', bold: true, fontSize: 10 }
+              ]
+            },
+            {
+              stack: [
+                { text: '_____________________________________', alignment: 'center' },
+                { text: `${cliente.name?.toUpperCase() || 'CLIENTE'}\n(LOCATÁRIO)`, alignment: 'center', bold: true, fontSize: 10 }
+              ]
+            }
+          ],
+          margin: [0, 0, 0, 40]
+        },
+
+        // TESTEMUNHAS
+        {
+          columns: [
+            {
+              width: '50%',
+              stack: [
+                { text: '______________________________________', margin: [0, 0, 0, 5] },
+                { text: 'TESTEMUNHA 1:', bold: true, fontSize: 10 },
+                { text: 'NOME:', fontSize: 10 },
+                { text: 'CPF:', fontSize: 10 }
+              ]
+            },
+            {
+              width: '50%',
+              stack: [
+                { text: '______________________________________', margin: [0, 0, 0, 5] },
+                { text: 'TESTEMUNHA 2:', bold: true, fontSize: 10 },
+                { text: 'NOME:', fontSize: 10 },
+                { text: 'CPF:', fontSize: 10 }
+              ]
+            }
           ]
         }
       ],
+      // ESTILOS GERAIS
       styles: {
-        header: { fontSize: 18, bold: true },
-        subheader: { fontSize: 12, bold: true, marginTop: 10 }
+        header: { fontSize: 14, bold: true, margin: [0, 0, 0, 10] },
+        sectionHeader: { fontSize: 11, bold: true, marginTop: 10, marginBottom: 2 },
+        justifyText: { fontSize: 10, alignment: 'justify', lineHeight: 1.2 }
+      },
+      defaultStyle: {
+        fontSize: 10
       }
     };
 
+    // Gera e abre o PDF
     pdfMake.createPdf(docDefinition).open();
   }
 

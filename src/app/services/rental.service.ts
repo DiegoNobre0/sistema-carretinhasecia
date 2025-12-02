@@ -1,12 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environment/environment';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class RentalService {
-  private apiUrl = 'http://localhost:3333/rentals'; // Backend Fastify
+
+  private api = environment.apiUrl; 
+  // Monta a rota específica
+  private apiUrl = `${this.api}/rentals`;
 
   constructor(private http: HttpClient) {}
 

@@ -1,11 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../environment/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BackupService {
-  private apiUrl = 'http://localhost:3333/backup';
+
+ private api = environment.apiUrl; 
+      // Monta a rota específica
+    private apiUrl = `${this.api}/backup`;
+
+ 
 
   constructor(private http: HttpClient) {}
 
