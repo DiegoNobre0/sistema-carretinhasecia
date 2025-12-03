@@ -32,4 +32,7 @@ export class RentalService {
 updateExtraCosts(id: string, extraCosts: number): Observable<any> {
   return this.http.patch(`${this.apiUrl}/${id}/costs`, { extraCosts });
 }
+uploadContract(id: string, fileBase64: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/${id}/contract`, { fileBase64 });
+}
 }

@@ -28,4 +28,14 @@ export class TrailerService {
   deleteTrailer(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
+  getAvailableTrailers(startDate: Date, endDate: Date): Observable<any[]> {
+  const start = startDate.toISOString();
+  const end = endDate.toISOString();
+  return this.http.get<any[]>(`${this.api}/trailers/available?startDate=${start}&endDate=${end}`);
+}
+
+// Adicione este método
+getBusyDates(trailerId: string): Observable<any[]> {
+  return this.http.get<any[]>(`${this.api}/trailers/${trailerId}/busy-dates`);
+}
 }

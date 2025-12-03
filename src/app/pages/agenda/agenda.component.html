@@ -48,12 +48,31 @@
 
         <div class="field">
           <label>Carretinha (Tipo)</label>
-          <p-dropdown [options]="trailers" optionLabel="plate" optionValue="id" formControlName="trailerId" 
-                      placeholder="Selecione o tipo..." styleClass="w-full">
-             <ng-template let-item pTemplate="item">
+          <p-dropdown 
+            [options]="trailers" 
+            optionLabel="plate" 
+            optionValue="id" 
+            formControlName="trailerId" 
+            placeholder="Selecione para ver agenda..." 
+            styleClass="w-full"
+            (onChange)="onTrailerSelect()"> <ng-template let-item pTemplate="item">
                <span>{{ item.plate }} - {{ item.model }}</span>
              </ng-template>
           </p-dropdown>
+        </div>
+
+        <div class="field">
+          <label>Período (Retirada - Devolução)</label>
+          <p-calendar 
+            formControlName="dates" 
+            selectionMode="range" 
+            [readonlyInput]="true" 
+            placeholder="Selecione as datas..."
+            dateFormat="dd/mm/yy" 
+            [showIcon]="true"
+            appendTo="body" 
+            styleClass="w-full"
+            [disabledDates]="disabledDates"> </p-calendar>
         </div>
 
         <div class="field">
@@ -64,20 +83,6 @@
           </div>
         </div>
 
-      <div class="field">
-          <label>Período (Retirada - Devolução)</label>
-          <p-calendar 
-            formControlName="date" 
-            selectionMode="range" 
-            [readonlyInput]="true" 
-            placeholder="Selecione o período..." 
-            dateFormat="dd/mm/yy" 
-            appendTo="body" 
-            styleClass="w-full" 
-            [showIcon]="true">
-          </p-calendar>
-        </div>
-
         <button pButton label="Agendar Reserva" icon="pi pi-check" class="btn-purple w-full mt-3" type="submit"></button>
       </form>
     </div>
@@ -85,12 +90,8 @@
     <div class="agenda-panel">
       
       <div class="search-bar">
-        <span><i class="pi pi-calendar"></i> Agenda</span>
-        <span class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <input type="text" pInputText placeholder="Filtrar por cliente..." />
-        </span>
-      </div>
+        <span><i class="pi pi-calendar"></i> Agenda </span>
+        </div>
 
       <div class="agenda-list">
         
@@ -106,22 +107,29 @@
               <div class="card-left">
                 <div class="avatar"><i class="pi pi-user"></i></div>
                 <div class="info">
-                  <span class="name">{{ item.customer.name }}</span>
-                  
+                  <span class="name">{{ item.customer?.name }}</span>
+                  <div class="sub-info">
+                    <span class="period-badge">
+                      <i class="pi pi-calendar-plus"></i>
+                      {{ item.startDate | date:'dd/MM' }} até {{ item.expectedEndDate | date:'dd/MM' }}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               <div class="card-center">
                 <div class="trailer-box">
                   <i class="pi pi-truck"></i>
-                  <span>{{ item.trailer.size }} - {{ item.trailer.model }}</span>
+                  <span>{{ item.trailer?.plate }} - {{ item.trailer?.model }}</span>
                 </div>
-                <span class="doc-info">CPF/CNPJ: {{ item.customer.document }}</span>
+                <span class="doc-info">Doc: {{ item.customer?.document }}</span>
               </div>
 
               <div class="card-right">
-                <span class="signal-label">SINAL</span>
-                <span class="signal-value">R$ {{ (item.totalValue * 0.3) | number:'1.2-2' }}</span>
+                <span class="signal-label">SINAL PAGO</span>
+                <span class="signal-value" [class.text-gray]="!item.signalValue">
+                  R$ {{ (item.signalValue || 0) | number:'1.2-2' }}
+                </span>
               </div>
 
             </div>

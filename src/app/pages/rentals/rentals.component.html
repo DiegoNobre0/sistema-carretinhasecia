@@ -5,11 +5,10 @@
       <h1>Locações</h1>
       <p class="subtitle">Controle operacional da frota.</p>
     </div>
-    <button pButton label="Nova Locação" class="p-button-warning" icon="pi pi-plus" (click)="showDialog()"></button>
+    <button pButton label="+ Nova Locação" class="p-button-warning" icon="pi pi-plus" (click)="showDialog()"></button>
   </div>
 
   <p-tabView>
-    
     <p-tabPanel header="Em Andamento ({{ activeRentals.length }})">
       
       <div *ngIf="activeRentals.length === 0" class="empty-state">
@@ -32,68 +31,61 @@
           </div>
 
           <div class="card-header">
-            <div class="avatar"><i class="pi pi-user"></i></div>
             <div class="client-info">
               <span class="name">{{ rental.customer?.name }}</span>
               <span class="doc">Doc: {{ rental.customer?.document }}</span>
             </div>
-            <button pButton icon="pi pi-print" class="p-button-rounded p-button-text p-button-secondary" 
-                    pTooltip="Imprimir Contrato" (click)="generateContract(rental)"></button>
+            
+            <div class="flex gap-2">
+              <button pButton icon="pi pi-print" class="p-button-rounded p-button-text p-button-secondary" 
+                      pTooltip="Gerar Contrato" (click)="generateContract(rental)"></button>
+              
+              <input type="file" [id]="'file-' + rental.id" (change)="onContractSelected($event, rental)" accept="application/pdf,image/*" hidden>
+              <label [for]="'file-' + rental.id" 
+                     class="p-button-rounded p-button-text p-button-icon-only cursor-pointer flex align-items-center justify-content-center"
+                     [ngClass]="rental.contractUrl ? 'text-green-500' : 'text-blue-500'"
+                     [pTooltip]="rental.contractUrl ? 'Substituir Assinado' : 'Anexar Assinado'">
+                <i class="pi pi-paperclip"></i>
+              </label>
+
+              <button *ngIf="rental.contractUrl" 
+                      pButton icon="pi pi-eye" 
+                      class="p-button-rounded p-button-text text-green-500" 
+                      pTooltip="Ver Assinado" 
+                      (click)="viewContract(rental)">
+              </button>
+            </div>
           </div>
 
           <div class="card-body">
             <div class="info-row">
-              <span class="label">CARRETINHA</span>
+              <span class="label">VEÍCULO</span>
               <span class="value highlight">{{ rental.trailer?.plate }} <small>({{ rental.trailer?.model }})</small></span>
             </div>
-            
+             <div class="info-row mt-2">
+              <span class="label">ENTREGA</span>
+              <span class="value dates">{{ rental.startDate | date:'dd/MM/yyyy' }}</span>
+            </div>
             <div class="info-row mt-2">
-              <span class="label">PERÍODO</span>
-              <span class="value dates">
-                {{ rental.startDate | date:'dd/MM' }} até 
-                <strong [class.text-red]="getRentalStatus(rental) === 'LATE'">
-                  {{ rental.expectedEndDate | date:'dd/MM' }}
-                </strong>
-              </span>
+              <span class="label">RETORNO</span>
+              <span class="value dates">{{ rental.expectedEndDate | date:'dd/MM/yyyy' }}</span>
             </div>
           </div>
 
-      <div class="card-footer">
-            
+          <div class="card-footer">
             <div class="finance-breakdown">
+              <div class="row"><span class="label">Base:</span><span class="value">R$ {{ getBaseValue(rental) | number:'1.2-2' }}</span></div>
               <div class="row">
-                <span class="label">Valor Base:</span>
-                <span class="value">R$ {{ getBaseValue(rental) | number:'1.2-2' }}</span>
-              </div>
-              
-         <div class="row">
-                <span class="label">Custos Extras:</span>
+                <span class="label">Extras:</span>
                 <div class="flex align-items-center gap-2">
                   <span class="value text-yellow-500">R$ {{ rental.extraCosts | number:'1.2-2' }}</span>
-                  
-                  <button 
-                    pButton 
-                    label="Adicionar" 
-                    icon="pi pi-plus-circle" 
-                    class="p-button-text p-button-sm p-button-warning py-1 px-2 text-xs"
-                    pTooltip="Lançar multas ou taxas"
-                    (click)="openCostDialog(rental)">
-                  </button>
+                  <button pButton label="Add" icon="pi pi-plus-circle" class="p-button-text p-button-sm p-button-warning py-1 px-2 text-xs" (click)="openCostDialog(rental)"></button>
                 </div>
               </div>
-
-              <div class="row total-row">
-                <span class="label">TOTAL:</span>
-                <span class="total">R$ {{ rental.totalValue | number:'1.2-2' }}</span>
-              </div>
+              <div class="row total-row"><span class="label">TOTAL:</span><span class="total">R$ {{ rental.totalValue | number:'1.2-2' }}</span></div>
             </div>
-
-            <button pButton label="Finalizar Locação" icon="pi pi-check-circle" 
-                    class="p-button-success w-full mt-3" 
-                    (click)="openReturnDialog(rental)">
-            </button>
+            <button pButton label="Finalizar Locação" icon="pi pi-check-circle" class="p-button-success w-full mt-3" (click)="openReturnDialog(rental)"></button>
           </div>
-
         </div>
       </div>
     </p-tabPanel>
@@ -106,10 +98,9 @@
               <th>Status</th>
               <th>Cliente</th>
               <th>Carretinha</th>
-              <th>Retirada</th>
               <th>Devolução Real</th>
               <th>Total Final</th>
-              <th>Ações</th>
+              <th>Contrato</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-rental>
@@ -117,12 +108,15 @@
               <td><p-tag value="FINALIZADO" severity="secondary"></p-tag></td>
               <td>{{ rental.customer?.name }}</td>
               <td>{{ rental.trailer?.plate }}</td>
-              <td>{{ rental.startDate | date:'dd/MM/yy' }}</td>
               <td>{{ rental.realEndDate | date:'dd/MM/yy HH:mm' }}</td>
               <td class="font-bold text-green-500">R$ {{ rental.totalValue | number:'1.2-2' }}</td>
               <td>
-                <button pButton icon="pi pi-print" class="p-button-rounded p-button-text" 
-                        (click)="generateContract(rental)"></button>
+                <button *ngIf="rental.contractUrl" 
+                        pButton icon="pi pi-eye" label="Ver Assinado" 
+                        class="p-button-sm p-button-outlined p-button-secondary" 
+                        (click)="viewContract(rental)">
+                </button>
+                <span *ngIf="!rental.contractUrl" class="text-gray-500 text-sm">-</span>
               </td>
             </tr>
           </ng-template>
@@ -130,193 +124,145 @@
       </div>
     </p-tabPanel>
 
+    <p-tabPanel header="Agendadas / Futuras ({{ futureRentals.length }})">
+      <div class="rentals-grid">
+        <div class="rental-card status-reserved" *ngFor="let rental of futureRentals">
+           <div class="status-badge reserved"><i class="pi pi-calendar"></i> AGENDADO</div>
+           <div class="card-header">
+             <div class="client-info">
+               <span class="name">{{ rental.customer?.name }}</span>
+               <span class="doc">{{ rental.customer?.document }}</span>
+             </div>
+           </div>
+           <div class="card-body">
+             <div class="info-row">
+               <span class="label">VEÍCULO</span>
+               <span class="value highlight">{{ rental.trailer?.plate }}</span>
+             </div>
+             <div class="info-row mt-2">
+               <span class="label">RETIRADA</span>
+               <span class="value dates">{{ rental.startDate | date:'dd/MM/yyyy' }}</span>
+             </div>
+             <div class="info-row mt-2">
+               <span class="label">ENTREGA</span>
+               <span class="value dates">{{ rental.expectedEndDate | date:'dd/MM/yyyy' }}</span>
+             </div>
+           </div>
+        </div>
+        <div *ngIf="!futureRentals || futureRentals.length === 0" class="empty-state">
+          <p>Nenhuma reserva futura.</p>
+        </div>
+      </div>
+    </p-tabPanel>
   </p-tabView>
 
-  <p-dialog 
-  header="Nova Locação" 
-  [(visible)]="displayModal" 
-  [modal]="true" 
-  [style]="{width: '850px'}" 
-  styleClass="rental-dialog"
-  [draggable]="false" 
-  [resizable]="false">
-  
-  <div class="rental-layout">
-    
-    <div class="form-column">
-      <form [formGroup]="rentalForm" (ngSubmit)="onSubmit()">
-        
-        <div class="section-title">Dados da Locação</div>
-<div class="field">
-          <label>Cliente</label>
-          <p-dropdown 
-            [options]="customers" 
-            optionLabel="name" 
-            optionValue="id"
-            formControlName="customerId" 
-            placeholder="Selecione o cliente..."
-            styleClass="w-full"
-            [filter]="true"
-            filterBy="name,document" 
-            appendTo="body"
-            (onChange)="calculateTotal()">
-            
-            <ng-template let-customer pTemplate="selectedItem">
-              <div class="flex align-items-center gap-2" *ngIf="customer">
-                <span class="font-bold">{{ customer.name }}</span>
-                <span class="text-sm text-gray-400">({{ customer.document }})</span>
-              </div>
-            </ng-template>
-
-            <ng-template let-customer pTemplate="item">
-              <div class="flex flex-column gap-1 border-bottom-1 surface-border pb-1">
-                <span class="font-bold text-white">{{ customer.name }}</span>
-                <div class="flex align-items-center gap-2 text-gray-400 text-sm">
-                  <i class="pi pi-id-card" style="font-size: 0.8rem"></i>
-                  <span>{{ customer.document }}</span>
-                  <span class="text-xs border-1 border-round px-1" 
-                        [class.border-blue-500]="customer.type === 'PF'"
-                        [class.text-blue-500]="customer.type === 'PF'"
-                        [class.border-yellow-500]="customer.type === 'PJ'"
-                        [class.text-yellow-500]="customer.type === 'PJ'">
-                    {{ customer.type }}
-                  </span>
+  <p-dialog header="Nova Locação" [(visible)]="displayModal" [modal]="true" [style]="{width: '950px'}" styleClass="rental-dialog" [draggable]="false" [resizable]="false">
+    <div class="rental-layout">
+      <div class="form-column">
+        <form [formGroup]="rentalForm" (ngSubmit)="onSubmit()">
+          <div class="section-title">Dados da Locação</div>
+          
+          <div class="field">
+            <label>Cliente</label>
+            <p-dropdown [options]="customers" optionLabel="name" optionValue="id" formControlName="customerId" placeholder="Selecione..." [filter]="true" filterBy="name,document" appendTo="body" (onChange)="calculateTotal()" styleClass="w-full">
+              <ng-template let-customer pTemplate="selectedItem">
+                <div class="flex align-items-center gap-2" *ngIf="customer">
+                  <span class="font-bold">{{ customer.name }}</span>
+                  <span class="text-sm text-gray-400">({{ customer.document }})</span>
                 </div>
-              </div>
-            </ng-template>
+              </ng-template>
+              <ng-template let-customer pTemplate="item">
+                <div class="flex flex-column gap-1 border-bottom-1 surface-border pb-1">
+                  <span class="font-bold text-white">{{ customer.name }}</span>
+                  <div class="flex align-items-center gap-2 text-gray-400 text-sm">
+                    <i class="pi pi-id-card"></i><span>{{ customer.document }}</span>
+                  </div>
+                </div>
+              </ng-template>
+            </p-dropdown>
+          </div>
 
-          </p-dropdown>
-        </div>
+          <div class="field">
+            <label>Carretinha</label>
+            <p-dropdown 
+              [options]="trailers" 
+              optionLabel="plate" 
+              optionValue="id" 
+              formControlName="trailerId" 
+              placeholder="Selecione para ver disponibilidade..." 
+              appendTo="body" 
+              (onChange)="onTrailerSelect()" 
+              styleClass="w-full">
+               <ng-template let-item pTemplate="item">
+                 <div class="flex align-items-center gap-2">
+                   <span class="font-bold">{{ item.plate }}</span>
+                   <span class="text-sm text-gray-400">- {{ item.model }}</span>
+                 </div>
+               </ng-template>
+            </p-dropdown>
+          </div>
 
-        <div class="field">
-          <label>Carretinha</label>
-          <p-dropdown 
-            [options]="trailers" 
-            optionLabel="plate" 
-            optionValue="id"
-            formControlName="trailerId" 
-            placeholder="Selecione a carretinha..."
-            styleClass="w-full"
-            appendTo="body"
-            (onChange)="calculateTotal()">
-             <ng-template let-item pTemplate="item">
-               <div class="flex align-items-center gap-2">
-                 <span class="font-bold">{{ item.plate }}</span>
-                 <span class="text-sm text-gray-400">- {{ item.model }}</span>
-               </div>
-             </ng-template>
-          </p-dropdown>
-        </div>
-
-      
-          <div class="field" style="flex: 2;">
-            <label>Período (Retirada e Devolução)</label>
+          <div class="field">
+            <label>Período</label>
             <p-calendar 
               formControlName="dates" 
               selectionMode="range" 
               [readonlyInput]="true" 
-              placeholder="Selecione o intervalo"
-              appendTo="body"
-              dateFormat="dd/mm/yy"
-              [showIcon]="true"
+              placeholder="Selecione as datas"
+              appendTo="body" 
+              dateFormat="dd/mm/yy" 
+              [showIcon]="true" 
+              [disabledDates]="disabledDates" 
               (onSelect)="calculateTotal()">
             </p-calendar>
           </div>
 
-          <div class="field" style="flex: 1;">
-            <label>Diária (R$)</label>
-            <p-inputNumber 
-              formControlName="dailyRate" 
-              mode="currency" 
-              currency="BRL" 
-              locale="pt-BR"
-              (onInput)="calculateTotal()">
-            </p-inputNumber>
+          <div class="form-row">
+             <div class="field" style="flex: 1;">
+               <label>Diária (R$)</label>
+               <p-inputNumber formControlName="dailyRate" mode="currency" currency="BRL" locale="pt-BR" (onInput)="calculateTotal()"></p-inputNumber>
+             </div>
+             <div class="field" style="flex: 1;">
+               <label>Sinal Pago (R$)</label>
+               <p-inputNumber formControlName="signalValue" mode="currency" currency="BRL" locale="pt-BR" placeholder="R$ 0,00"></p-inputNumber>
+             </div>
           </div>
-        
-
-      </form>
-    </div>
-
-    <div class="summary-column">
-      <div class="summary-card">
-        <div class="summary-header">
-          <h3>RESUMO DA LOCAÇÃO</h3>
-          <span class="status-tag">RASCUNHO</span>
-        </div>
-
-        <div class="summary-body" *ngIf="totalCalculado > 0; else emptySummary">
-          
-          <div class="summary-item">
-            <span class="label">CLIENTE</span>
-            <span class="value">{{ selectedCustomerObj?.name }}</span>
-            <span class="sub-value">{{ selectedCustomerObj?.document }}</span>
-          </div>
-
-          <div class="summary-item">
-            <span class="label">VEÍCULO</span>
-            <span class="value">{{ selectedTrailerObj?.plate }}</span>
-            <span class="sub-value">{{ selectedTrailerObj?.model }}</span>
-          </div>
-
-          <div class="dates-grid">
-            <div class="date-box">
-              <span class="label">RETIRADA</span>
-              <span class="value">{{ rentalForm.value.dates[0] | date:'dd/MM/yy' }}</span>
-            </div>
-            <div class="arrow"><i class="pi pi-arrow-right"></i></div>
-            <div class="date-box">
-              <span class="label">DEVOLUÇÃO</span>
-              <span class="value">{{ rentalForm.value.dates[1] | date:'dd/MM/yy' }}</span>
-            </div>
-          </div>
-
-          <div class="total-row">
-            <span>TOTAL ({{ diasCalculados }} dias)</span>
-            <strong class="text-green-400">R$ {{ totalCalculado | number:'1.2-2' }}</strong>
-          </div>
-
-          <div class="docs-actions">
-            <button pButton label="Contrato" icon="pi pi-file-pdf" 
-                    class="p-button-outlined p-button-sm p-button-secondary"
-                    (click)="generateDraftDoc('CONTRACT')"></button>
-            
-            <button pButton label="Promissória" icon="pi pi-wallet" 
-                    class="p-button-outlined p-button-sm p-button-secondary"
-                    (click)="generateDraftDoc('PROMISSORY')"></button>
-          </div>
-
-        </div>
-
-        <ng-template #emptySummary>
-          <div class="empty-placeholder">
-            <i class="pi pi-calculator"></i>
-            <p>Preencha o formulário para ver o resumo e documentos.</p>
-          </div>
-        </ng-template>
-
+        </form>
       </div>
 
-      <button 
-        pButton 
-        label="CONFIRMAR LOCAÇÃO" 
-        icon="pi pi-check" 
-        class="p-button-warning w-full mt-3 font-bold" 
-        [disabled]="!rentalForm.valid"
-        (click)="onSubmit()">
-      </button>
+      <div class="summary-column">
+        <div class="summary-card">
+          <div class="summary-header"><h3>RESUMO</h3><span class="status-tag">RASCUNHO</span></div>
+          <div class="summary-body" *ngIf="totalCalculado > 0; else emptySummary">
+            <div class="summary-item"><span class="label">CLIENTE</span><span class="value">{{ selectedCustomerObj?.name }}</span></div>
+            <div class="summary-item"><span class="label">VEÍCULO</span><span class="value">{{ selectedTrailerObj?.plate }}</span></div>
+            <div class="dates-grid">
+              <div class="date-box"><span class="label">RETIRADA</span><span class="value">{{ rentalForm.value.dates[0] | date:'dd/MM/yy' }}</span></div>
+              <div class="arrow"><i class="pi pi-arrow-right"></i></div>
+              <div class="date-box"><span class="label">DEVOLUÇÃO</span><span class="value">{{ rentalForm.value.dates[1] | date:'dd/MM/yy' }}</span></div>
+            </div>
+            <div class="total-row"><span>TOTAL ({{ diasCalculados }} dias)</span><strong class="text-green-400">R$ {{ totalCalculado | number:'1.2-2' }}</strong></div>
+            <div class="docs-actions">
+              <button pButton label="Contrato" icon="pi pi-file-pdf" class="p-button-outlined p-button-sm p-button-secondary" (click)="generateDraftDoc('CONTRACT')"></button>
+              <button pButton label="Promissória" icon="pi pi-wallet" class="p-button-outlined p-button-sm p-button-secondary" (click)="generateDraftDoc('PROMISSORY')"></button>
+            </div>
+          </div>
+          <ng-template #emptySummary><div class="empty-placeholder"><i class="pi pi-calculator"></i><p>Preencha o formulário.</p></div></ng-template>
+        </div>
+        <button pButton label="CONFIRMAR LOCAÇÃO" icon="pi pi-check" class="p-button-warning w-full mt-3 font-bold" [disabled]="!rentalForm.valid" (click)="onSubmit()"></button>
+      </div>
     </div>
-
-  </div>
-</p-dialog>
+  </p-dialog>
 
   <p-dialog header="Finalizar Locação" [(visible)]="displayReturnModal" [modal]="true" [style]="{width: '400px'}">
     <div class="flex flex-column gap-3">
       <p>Confirmar devolução?</p>
-      <div class="field">
+      
+      <!-- <div class="field">
         <label>Custos Extras / Multa (R$)</label>
-        <p-inputNumber [(ngModel)]="extraCostsInput" mode="currency" currency="BRL" locale="pt-BR"></p-inputNumber>
-      </div>
+        <p-inputNumber [(ngModel)]="extraCostsInput" mode="currency" currency="BRL" locale="pt-BR" placeholder="R$ 0,00" styleClass="w-full"></p-inputNumber>
+      </div> -->
+
       <div class="flex justify-content-end gap-2 mt-4">
         <button pButton label="Cancelar" class="p-button-text" (click)="displayReturnModal=false"></button>
         <button pButton label="Confirmar" class="p-button-success" (click)="onConfirmReturn()"></button>
@@ -324,33 +270,27 @@
     </div>
   </p-dialog>
 
-  <p-dialog 
-    header="Gerenciar Custos Extras" 
-    [(visible)]="displayCostModal" 
-    [modal]="true" 
-    [style]="{width: '350px'}">
-    
+  <p-dialog header="Gerenciar Custos Extras" [(visible)]="displayCostModal" [modal]="true" [style]="{width: '350px'}">
     <div class="flex flex-column gap-3">
-      <p class="text-sm text-gray-400">
-        Adicione valores de multas, avarias ou taxas extras sem finalizar a locação.
-      </p>
-      
+      <p class="text-sm text-gray-400">Adicione valores de multas ou taxas.</p>
       <div class="field">
         <label>Valor Extra Total (R$)</label>
-        <p-inputNumber 
-          [(ngModel)]="costInput" 
-          mode="currency" 
-          currency="BRL" 
-          locale="pt-BR"
-          [min]="0"
-          styleClass="w-full">
-        </p-inputNumber>
+        <p-inputNumber [(ngModel)]="costInput" mode="currency" currency="BRL" locale="pt-BR" [min]="0" styleClass="w-full"></p-inputNumber>
       </div>
-
       <div class="flex justify-content-end gap-2 mt-2">
         <button pButton label="Cancelar" class="p-button-text" (click)="displayCostModal=false"></button>
-        <button pButton label="Salvar Custos" class="p-button-warning" (click)="onSaveCost()"></button>
+        <button pButton label="Salvar" class="p-button-warning" (click)="onSaveCost()"></button>
       </div>
+    </div>
+  </p-dialog>
+
+  <p-dialog header="Contrato Assinado Digitalizado" [(visible)]="displayContractModal" [modal]="true" [style]="{width: '90%', height: '90%'}" [maximizable]="true">
+    <div class="h-full w-full flex flex-column bg-black-alpha-90 p-3 border-round" *ngIf="sanitizedContractUrl">
+      <object [data]="sanitizedContractUrl" type="application/pdf" width="100%" height="100%" class="h-full">
+        <p class="text-white text-center mt-5">
+          Seu navegador não exibiu o PDF. <a [href]="sanitizedContractUrl" download="contrato_assinado.pdf" class="text-yellow-500 underline">Baixar arquivo</a>
+        </p>
+      </object>
     </div>
   </p-dialog>
 

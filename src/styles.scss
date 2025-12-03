@@ -90,3 +90,20 @@ body {
     width: 100% !important;
   }
 }
+
+/* Usamos 'body' antes para ganhar a guerra de especificidade do PrimeNG */
+body .p-datepicker table td.p-disabled > span {
+    background-color: #ff3b3b !important;  /* Vermelho vivo no fundo */
+    color: #ffffff !important;             /* Texto branco para contraste */
+    text-decoration: line-through !important; /* Riscado */
+    opacity: 1 !important;                 /* IMPORTANTE: Tira o efeito "fantasma" */
+    border-radius: 50%;                    /* Bolinha */
+    font-weight: bold;
+    cursor: not-allowed !important;
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Um brilho vermelho sutil */
+}
+
+/* Garante que o hover não mude a cor */
+body .p-datepicker table td.p-disabled:hover > span {
+    background-color: #ff3b3b !important;
+}

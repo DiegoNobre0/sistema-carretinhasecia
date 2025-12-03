@@ -1,7 +1,7 @@
 :host {
   --bg-dark: #121524;
   --bg-card: #1D2136;
-  --accent-purple: #9C27B0; /* Roxo do botão e título */
+  --accent-purple: #FFC107; /* Roxo do botão e título */
   --accent-green: #00C851;
   --text-gray: #8c90b0;
 }
@@ -104,3 +104,19 @@
     .card-left, .card-center, .card-right { width: 100%; align-items: flex-start; } 
   }
 }
+
+.p-datepicker table td.p-disabled > span {
+  background-color: rgba(255, 68, 68, 0.2) !important; /* Fundo vermelho claro */
+  color: #ff4444 !important;       /* Texto vermelho */
+  text-decoration: line-through;   /* Riscado */
+  opacity: 1 !important;           /* Tira a transparência padrão */
+  font-weight: bold;
+  border-radius: 50%;              /* Mantém a bolinha */
+}
+
+/* Remove efeito de hover (mouse em cima) */
+.p-datepicker table td.p-disabled:hover > span {
+  background-color: rgba(255, 68, 68, 0.3) !important;
+  cursor: not-allowed !important;
+}
+
