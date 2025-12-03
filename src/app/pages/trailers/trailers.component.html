@@ -1,65 +1,114 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
 <div class="page-container">
-
-  <div class="header-action">
-    <div>
-      <h1>Carretinhas Disponíveis</h1>
-      <p class="subtitle">Gerencie sua frota para locação.</p>
+  
+  <div class="header-action card-dark mb-4">
+    <div class="title-area">
+      <h1>Frota de Carretinhas</h1>
+      <p class="subtitle">Gerencie seus veículos disponíveis.</p>
     </div>
-    <button pButton label="+ Nova Carretinha" class="p-button-primary" (click)="showDialog()">
-    </button>
-  </div>
 
-  <div *ngIf="trailers.length === 0" class="empty-state">
-    <p>Nenhuma carretinha cadastrada ainda.</p>
-  </div>
-
-  <div class="grid-cards">
-    <div class="card-trailer" *ngFor="let item of trailers">
-      <div class="card-img">
-        <i class="pi pi-image" *ngIf="!item.photoUrl"></i>
-        <img [src]="item.photoUrl" *ngIf="item.photoUrl" alt="Foto da carretinha">
-      </div>
-      <div class="card-info">
-        <h3>{{ item.plate }}</h3>
-        <span class="model">{{ item.model }}</span>
-        <div class="tag">{{ item.size }}</div>
-      </div>
+    <div class="actions-area">
+      <span class="p-input-icon-left search-box">
+        <i class="pi pi-search"></i>
+        <input type="text" pInputText [(ngModel)]="searchTerm" (input)="filterList()" placeholder="Buscar placa ou modelo..." />
+      </span>
+      <button pButton label="Nova Carretinha" icon="pi pi-plus" class="p-button-warning" (click)="showDialog()"></button>
     </div>
   </div>
 
-  <p-dialog header="Cadastrar Nova Carretinha" [(visible)]="displayModal" [modal]="true" [style]="{width: '400px'}"
-    [draggable]="false" [resizable]="false">
+  <div class="trailers-grid">
+    
+    <div class="trailer-card" *ngFor="let item of filteredTrailers">
+      
+      <div class="card-image">
+        <div class="status-badge">
+          <p-tag [value]="getStatusLabel(item.status)" [severity]="getStatusSeverity(item.status)"></p-tag>
+        </div>
 
+        <img *ngIf="item.photoUrl" [src]="item.photoUrl" alt="Foto">
+        <div *ngIf="!item.photoUrl" class="placeholder">
+          <i class="pi pi-image"></i>
+        </div>
+      </div>
+
+      <div class="card-content">
+        <div class="info-header">
+          <h3 class="plate">{{ item.plate }}</h3>
+          <span class="model">{{ item.model }}</span>
+        </div>
+        
+        <div class="info-detail">
+          <i class="pi pi-arrows-h"></i>
+          <span>{{ item.size }}</span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button pButton icon="pi pi-pencil" label="Editar" 
+                class="p-button-text p-button-sm p-button-info" 
+                (click)="editTrailer(item)">
+        </button>
+        
+        <button pButton icon="pi pi-trash" 
+                class="p-button-text p-button-sm p-button-danger" 
+                pTooltip="Excluir"
+                (click)="deleteTrailer($event, item)">
+        </button>
+      </div>
+
+    </div>
+
+    <div *ngIf="filteredTrailers.length === 0" class="col-12 text-center p-5 w-full">
+      <p class="text-gray-500">Nenhuma carretinha encontrada.</p>
+    </div>
+
+  </div>
+
+  <p-dialog 
+    [header]="isEditMode ? 'Editar Carretinha' : 'Nova Carretinha'" 
+    [(visible)]="displayModal" 
+    [modal]="true" 
+    [style]="{width: '450px'}"
+    [draggable]="false" 
+    [resizable]="false">
+    
     <form [formGroup]="trailerForm" (ngSubmit)="onSubmit()" class="form-grid">
-
+      
       <div class="field">
         <label>Placa</label>
-        <input pInputText formControlName="plate" placeholder="Ex: BRA-2025" class="w-full">
+        <input pInputText formControlName="plate" class="w-full text-uppercase" placeholder="ABC-1234">
       </div>
 
       <div class="field">
         <label>Modelo</label>
-        <input pInputText formControlName="model" placeholder="Ex: Fazendinha" class="w-full">
+        <input pInputText formControlName="model" class="w-full" placeholder="Ex: Fazendinha">
       </div>
 
       <div class="field">
-        <label>Tamanho</label>
-        <input pInputText formControlName="size" placeholder="Ex: 2.00 x 1.20" class="w-full">
+        <label>Tamanho (Dimensões)</label>
+        <input pInputText formControlName="size" class="w-full" placeholder="Ex: 2.00 x 1.20">
       </div>
 
       <div class="field">
-        <label>Foto da Carretinha</label>
-        <div class="flex align-items-center gap-3">
-          <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full">
-
-          <img *ngIf="trailerForm.get('photoUrl')?.value" [src]="trailerForm.get('photoUrl')?.value"
-            style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
+        <label>Foto do Veículo</label>
+        <div class="file-upload-box">
+          <input type="file" (change)="onFileSelected($event)" accept="image/*" id="fileTrailer" hidden>
+          <label for="fileTrailer" class="upload-btn">
+            <i class="pi pi-camera"></i>
+            <span>{{ trailerForm.get('photoUrl')?.value ? 'Alterar Foto' : 'Escolher Foto' }}</span>
+          </label>
+          
+          <div *ngIf="trailerForm.get('photoUrl')?.value" class="preview-mini">
+            <img [src]="trailerForm.get('photoUrl')?.value">
+          </div>
         </div>
       </div>
 
-      <div class="form-footer mt-4 flex justify-content-end gap-2">
+      <div class="flex justify-content-end gap-2 mt-4">
         <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
-        <button pButton label="Salvar" type="submit" class="p-button-primary"></button>
+        <button pButton [label]="isEditMode ? 'Salvar Alterações' : 'Cadastrar'" type="submit" class="p-button-warning"></button>
       </div>
 
     </form>

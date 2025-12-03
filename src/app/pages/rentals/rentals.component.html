@@ -5,7 +5,7 @@
       <h1>Locações</h1>
       <p class="subtitle">Controle operacional da frota.</p>
     </div>
-    <button pButton label="+ Nova Locação" class="p-button-warning" icon="pi pi-plus" (click)="showDialog()"></button>
+    <button pButton label="Nova Locação" class="p-button-warning" icon="pi pi-plus" (click)="showDialog()"></button>
   </div>
 
   <p-tabView>
@@ -54,7 +54,22 @@
                       pTooltip="Ver Assinado" 
                       (click)="viewContract(rental)">
               </button>
+
+                <button pButton icon="pi pi-pencil" 
+                      class="p-button-rounded p-button-text p-button-info" 
+                      pTooltip="Editar Dados" 
+                      (click)="editRental(rental)">
+              </button>
+
+              <button pButton icon="pi pi-trash" 
+                      class="p-button-rounded p-button-text p-button-danger" 
+                      pTooltip="Cancelar/Excluir" 
+                      (click)="confirmDelete($event, rental)">
+              </button>
+
+
             </div>
+         
           </div>
 
           <div class="card-body">
@@ -118,6 +133,13 @@
                 </button>
                 <span *ngIf="!rental.contractUrl" class="text-gray-500 text-sm">-</span>
               </td>
+              <td>
+                <button pButton icon="pi pi-trash" 
+                        class="p-button-rounded p-button-text p-button-danger p-button-sm" 
+                        pTooltip="Apagar Registro" 
+                        (click)="confirmDelete($event, rental)">
+                </button>
+              </td>
             </tr>
           </ng-template>
         </p-table>
@@ -127,13 +149,30 @@
     <p-tabPanel header="Agendadas / Futuras ({{ futureRentals.length }})">
       <div class="rentals-grid">
         <div class="rental-card status-reserved" *ngFor="let rental of futureRentals">
+           
            <div class="status-badge reserved"><i class="pi pi-calendar"></i> AGENDADO</div>
+           
            <div class="card-header">
              <div class="client-info">
                <span class="name">{{ rental.customer?.name }}</span>
                <span class="doc">{{ rental.customer?.document }}</span>
              </div>
+
+             <div class="flex gap-2">
+                <button pButton icon="pi pi-pencil" 
+                        class="p-button-rounded p-button-text p-button-info" 
+                        pTooltip="Editar Reserva" 
+                        (click)="editRental(rental)">
+                </button>
+
+                <button pButton icon="pi pi-trash" 
+                        class="p-button-rounded p-button-text p-button-danger" 
+                        pTooltip="Cancelar Reserva" 
+                        (click)="confirmDelete($event, rental)">
+                </button>
+             </div>
            </div>
+
            <div class="card-body">
              <div class="info-row">
                <span class="label">VEÍCULO</span>
@@ -148,7 +187,16 @@
                <span class="value dates">{{ rental.expectedEndDate | date:'dd/MM/yyyy' }}</span>
              </div>
            </div>
+
+           <div class="card-footer mt-3 pt-2 border-top-1 border-gray-800">
+              <div class="flex justify-content-between align-items-center">
+                  <span class="text-sm text-gray-400">Sinal: R$ {{ rental.signalValue | number:'1.2-2' }}</span>
+                  <span class="font-bold text-green-500">Total: R$ {{ rental.totalValue | number:'1.2-2' }}</span>
+              </div>
+           </div>
+
         </div>
+
         <div *ngIf="!futureRentals || futureRentals.length === 0" class="empty-state">
           <p>Nenhuma reserva futura.</p>
         </div>
@@ -295,3 +343,5 @@
   </p-dialog>
 
 </div>
+
+<p-confirmDialog></p-confirmDialog>

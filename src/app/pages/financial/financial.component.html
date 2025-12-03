@@ -1,3 +1,6 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
 <div class="page-container">
   
   <div class="header-action">
@@ -5,16 +8,47 @@
       <h1>Financeiro</h1>
       <p class="subtitle">Extrato unificado de locações e despesas.</p>
     </div>
-    <button pButton label="+ Novo Lançamento" class="p-button-success" (click)="showDialog()"></button>
+    <button pButton label="+ Novo Lançamento" class="p-button-success" icon="pi pi-plus" (click)="showDialog()"></button>
+  </div>
+
+  <div class="filter-container card-dark mb-4">
+    <div class="filter-label">
+      <i class="pi pi-filter"></i>
+      <span>Filtrar por Período:</span>
+    </div>
+
+    <div class="filter-controls">
+      <p-calendar 
+        [(ngModel)]="dateFilter" 
+        selectionMode="range" 
+        placeholder="Selecione início e fim..." 
+        [readonlyInput]="true" 
+        [showIcon]="true"
+        styleClass="custom-calendar">
+      </p-calendar>
+      
+      <button pButton label="Filtrar" icon="pi pi-search" 
+              class="p-button-warning" 
+              (click)="onFilterChange()">
+      </button>
+
+      <button *ngIf="dateFilter" 
+              pButton icon="pi pi-times" 
+              class="p-button-rounded p-button-text p-button-secondary" 
+              pTooltip="Limpar Filtro" 
+              (click)="clearFilter()">
+      </button>
+    </div>
   </div>
 
   <div class="balance-card mb-4" [ngClass]="{'positive': balance >= 0, 'negative': balance < 0}">
-    <span>SALDO ATUAL</span>
-    <h2>R$ {{ balance | number:'1.2-2' }}</h2>
+    <span class="label">SALDO DO PERÍODO</span>
+    <h2 class="value">R$ {{ balance | number:'1.2-2' }}</h2>
   </div>
 
   <div class="card-table">
-    <p-table [value]="statement" [paginator]="true" [rows]="10" styleClass="p-datatable-sm">
+    <p-table [value]="statement" [paginator]="true" [rows]="10" styleClass="p-datatable-sm" responsiveLayout="scroll">
+      
       <ng-template pTemplate="header">
         <tr>
           <th>Data</th>
@@ -23,63 +57,92 @@
           <th>Origem</th>
           <th>Tipo</th>
           <th>Valor</th>
+          <th class="text-center">Ações</th>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-item>
         <tr>
           <td>{{ item.date | date:'dd/MM/yyyy' }}</td>
           <td>{{ item.description }}</td>
           <td>{{ item.category }}</td>
           <td>
-            <span *ngIf="item.origin === 'SYSTEM'" class="text-gray-500 text-xs">AUTOMÁTICO</span>
-            <span *ngIf="item.origin === 'MANUAL'" class="text-blue-400 text-xs font-bold">MANUAL</span>
+            <span *ngIf="item.origin === 'SYSTEM'" class="text-gray-500 text-xs font-bold border-1 border-gray-700 px-2 py-1 border-round">AUTO</span>
+            <span *ngIf="item.origin === 'MANUAL'" class="text-blue-400 text-xs font-bold border-1 border-blue-900 px-2 py-1 border-round">MANUAL</span>
           </td>
           <td>
             <p-tag [value]="item.type === 'INCOME' ? 'ENTRADA' : 'SAÍDA'" 
                    [severity]="item.type === 'INCOME' ? 'success' : 'danger'">
             </p-tag>
           </td>
-          <td [ngClass]="item.type === 'INCOME' ? 'text-green-500' : 'text-red-500'" class="font-bold">
+          <td [ngClass]="item.type === 'INCOME' ? 'text-green-500' : 'text-red-500'" class="font-bold text-lg">
             {{ item.type === 'INCOME' ? '+' : '-' }} R$ {{ item.amount | number:'1.2-2' }}
           </td>
+          
+          <td class="text-center">
+            <div *ngIf="item.origin === 'MANUAL'; else autoBlock" class="flex gap-2 justify-content-center">
+              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-info p-button-sm" 
+                      pTooltip="Editar" (click)="editTransaction(item)"></button>
+              <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" 
+                      pTooltip="Excluir" (click)="deleteTransaction(item)"></button>
+            </div>
+            <ng-template #autoBlock>
+              <span class="text-gray-600 text-xs" pTooltip="Gerenciado pelo sistema"><i class="pi pi-lock"></i></span>
+            </ng-template>
+          </td>
+
         </tr>
       </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center p-4 text-gray-500">Nenhum lançamento encontrado neste período.</td>
+        </tr>
+      </ng-template>
+
     </p-table>
   </div>
 
-  <p-dialog header="Novo Lançamento Manual" [(visible)]="displayModal" [modal]="true" [style]="{width: '450px'}">
+  <p-dialog 
+    [header]="isEditMode ? 'Editar Lançamento' : 'Novo Lançamento Manual'" 
+    [(visible)]="displayModal" 
+    [modal]="true" 
+    [style]="{width: '450px'}"
+    [draggable]="false" 
+    [resizable]="false">
+    
     <form [formGroup]="transactionForm" (ngSubmit)="onSubmit()" class="form-grid">
       
       <div class="field">
         <label>Descrição</label>
-        <input pInputText formControlName="description" class="w-full" placeholder="Ex: Conta de Luz">
+        <input pInputText formControlName="description" class="w-full" placeholder="Ex: Pagamento de Luz">
       </div>
 
       <div class="form-row flex gap-3">
         <div class="field flex-1">
           <label>Tipo</label>
-          <p-dropdown [options]="types" formControlName="type" styleClass="w-full"></p-dropdown>
+          <p-dropdown [options]="types" formControlName="type" styleClass="w-full" appendTo="body"></p-dropdown>
         </div>
         <div class="field flex-1">
           <label>Categoria</label>
-          <p-dropdown [options]="categories" formControlName="category" [editable]="true" styleClass="w-full" placeholder="Selecione ou digite"></p-dropdown>
+          <p-dropdown [options]="categories" formControlName="category" [editable]="true" styleClass="w-full" placeholder="Selecione ou digite" appendTo="body"></p-dropdown>
         </div>
       </div>
 
       <div class="form-row flex gap-3 mt-2">
         <div class="field flex-1">
           <label>Data</label>
-          <p-calendar formControlName="date" dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
+          <p-calendar formControlName="date" dateFormat="dd/mm/yy" appendTo="body" styleClass="w-full"></p-calendar>
         </div>
         <div class="field flex-1">
           <label>Valor (R$)</label>
-          <p-inputNumber formControlName="amount" mode="currency" currency="BRL" locale="pt-BR"></p-inputNumber>
+          <p-inputNumber formControlName="amount" mode="currency" currency="BRL" locale="pt-BR" styleClass="w-full"></p-inputNumber>
         </div>
       </div>
 
       <div class="flex justify-content-end gap-2 mt-4">
         <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
-        <button pButton label="Salvar" type="submit" class="p-button-success"></button>
+        <button pButton [label]="isEditMode ? 'Salvar Alterações' : 'Lançar no Caixa'" type="submit" class="p-button-success" [disabled]="!transactionForm.valid"></button>
       </div>
 
     </form>

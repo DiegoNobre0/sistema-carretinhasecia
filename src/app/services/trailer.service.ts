@@ -38,4 +38,8 @@ export class TrailerService {
 getBusyDates(trailerId: string): Observable<any[]> {
   return this.http.get<any[]>(`${this.api}/trailers/${trailerId}/busy-dates`);
 }
+
+updateTrailer(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}`, data);
+  }
 }

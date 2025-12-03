@@ -10,10 +10,14 @@ import { environment } from '../environment/environment';
 export class MaintenanceService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  getMaintenances(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/maintenances`);
+  getMaintenances(startDate?: string, endDate?: string): Observable<any[]> {
+    let params = '';
+    if (startDate && endDate) {
+      params = `?startDate=${startDate}&endDate=${endDate}`;
+    }
+    return this.http.get<any[]>(`${this.apiUrl}/maintenances${params}`);
   }
 
   createMaintenance(data: any): Observable<any> {
@@ -23,5 +27,13 @@ export class MaintenanceService {
   // Liberar carretinha da manutenção
   finishMaintenance(trailerId: string): Observable<any> {
     return this.http.patch(`${this.apiUrl}/trailers/${trailerId}/finish-maintenance`, {});
+  }
+  updateMaintenance(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/maintenances/${id}`, data);
+  }
+
+  // NOVO: Excluir
+  deleteMaintenance(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/maintenances/${id}`);
   }
 }

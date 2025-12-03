@@ -1,3 +1,6 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
 <div class="page-container">
   
   <div class="header-area">
@@ -5,28 +8,46 @@
     <p class="subtitle">Controle de custos e histórico de serviços realizados.</p>
   </div>
 
+  <div class="filter-container card-dark mb-4">
+    <div class="filter-label">
+      <i class="pi pi-filter"></i>
+      <span>Filtrar por Período:</span>
+    </div>
+
+    <div class="filter-controls">
+      <p-calendar 
+        [(ngModel)]="dateFilter" 
+        selectionMode="range" 
+        placeholder="Selecione início e fim..." 
+        [readonlyInput]="true" 
+        [showIcon]="true"
+        styleClass="custom-calendar">
+      </p-calendar>
+      
+      <button pButton label="Filtrar" icon="pi pi-search" 
+              class="p-button-warning" 
+              (click)="onFilterChange()">
+      </button>
+
+      <button *ngIf="dateFilter" 
+              pButton icon="pi pi-times" 
+              class="p-button-rounded p-button-text p-button-secondary" 
+              pTooltip="Limpar Filtro" 
+              (click)="clearFilter()">
+      </button>
+    </div>
+  </div>
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-info">
-        <span class="label">CUSTO TOTAL EM MANUTENÇÃO</span>
-        <h2 class="value text-yellow">R$ {{ totalCost | number:'1.2-2' }}</h2>
-      </div>
+      <div class="kpi-info"><span class="label">CUSTO TOTAL</span><h2 class="value text-yellow">R$ {{ totalCost | number:'1.2-2' }}</h2></div>
       <i class="pi pi-dollar icon-bg"></i>
     </div>
-
     <div class="kpi-card">
-      <div class="kpi-info">
-        <span class="label">SERVIÇOS REALIZADOS</span>
-        <h2 class="value text-white">{{ totalServices }}</h2>
-      </div>
+      <div class="kpi-info"><span class="label">SERVIÇOS</span><h2 class="value text-white">{{ totalServices }}</h2></div>
       <i class="pi pi-wrench icon-bg"></i>
     </div>
-
     <div class="kpi-card">
-      <div class="kpi-info">
-        <span class="label">CUSTO MÉDIO POR SERVIÇO</span>
-        <h2 class="value text-purple">R$ {{ averageCost | number:'1.2-2' }}</h2>
-      </div>
+      <div class="kpi-info"><span class="label">MÉDIA / SERVIÇO</span><h2 class="value text-purple">R$ {{ averageCost | number:'1.2-2' }}</h2></div>
       <i class="pi pi-chart-line icon-bg"></i>
     </div>
   </div>
@@ -34,78 +55,81 @@
   <div class="main-layout">
     
     <div class="form-panel card-dark">
-      <h3>Novo Registro</h3>
+      <h3 [class.text-yellow-500]="isEditMode">
+        {{ isEditMode ? 'Editar Registro' : 'Novo Registro' }}
+      </h3>
       
       <form [formGroup]="maintenanceForm" (ngSubmit)="onSubmit()">
         <div class="field">
           <label>Carretinha</label>
-          <p-dropdown 
-            [options]="availableTrailers" 
-            optionLabel="plate" 
-            optionValue="id"
-            formControlName="trailerId" 
-            placeholder="Selecione..."
-            styleClass="w-full"
-            [filter]="true">
-             <ng-template let-item pTemplate="item">
-               <span>{{ item.plate }} - {{ item.model }}</span>
-             </ng-template>
+          <p-dropdown [options]="availableTrailers" optionLabel="plate" optionValue="id" formControlName="trailerId" 
+                      placeholder="Selecione..." [filter]="true" styleClass="w-full">
+             <ng-template let-item pTemplate="item"><span>{{ item.plate }} - {{ item.model }}</span></ng-template>
           </p-dropdown>
         </div>
 
         <div class="field">
-          <label>Descrição do Serviço</label>
-          <input pInputText formControlName="description" placeholder="Ex: Troca de pneu..." class="w-full">
+          <label>Descrição</label>
+          <input pInputText formControlName="description" class="w-full">
         </div>
+
+        <!-- <div class="field"><label>Oficina</label><input pInputText formControlName="workshop" class="w-full"></div> -->
 
         <div class="form-row">
-          <div class="field half">
-            <label>Valor (R$)</label>
-            <p-inputNumber formControlName="cost" mode="currency" currency="BRL" locale="pt-BR" placeholder="0,00" styleClass="w-full"></p-inputNumber>
-          </div>
-          <div class="field half">
-            <label>Data</label>
-            <p-calendar formControlName="date" dateFormat="dd/mm/yy" appendTo="body" styleClass="w-full"></p-calendar>
-          </div>
+          <div class="field half"><label>Valor (R$)</label><p-inputNumber formControlName="cost" mode="currency" currency="BRL" locale="pt-BR" styleClass="w-full"></p-inputNumber></div>
+          
+        </div>
+        <div class="form-row">
+          
+          <div class="field half"><label>Data</label><p-calendar formControlName="date" dateFormat="dd/mm/yy" appendTo="body" styleClass="w-full"></p-calendar></div>
         </div>
 
-        <button pButton label="Registrar Manutenção" icon="pi pi-wrench" class="btn-submit w-full mt-3" type="submit" [disabled]="!maintenanceForm.valid"></button>
+        <div class="flex gap-2 mt-3">
+          <button *ngIf="isEditMode" pButton label="Cancelar" type="button" class="p-button-outlined w-full" (click)="cancelEdit()"></button>
+          <button pButton [label]="isEditMode ? 'Salvar Alterações' : 'Registrar'" icon="pi pi-check" class="btn-submit w-full" type="submit"></button>
+        </div>
       </form>
     </div>
 
     <div class="history-panel">
-      <div class="panel-header">
-        <i class="pi pi-calendar"></i> Histórico de Serviços
-      </div>
-
       <div class="history-list">
         <div class="service-card" *ngFor="let item of maintenances">
           
           <div class="card-left">
-            <div class="icon-box">
-              <i class="pi pi-truck"></i>
-            </div>
+            <div class="icon-box"><i class="pi pi-truck"></i></div>
             <div class="vehicle-info">
-              <span class="plate">{{ item.trailer?.plate }}</span>
+              <span class="plate">{{ item.trailer?.plate || 'Excluído' }}</span>
               <span class="model">{{ item.trailer?.model }}</span>
             </div>
           </div>
 
           <div class="card-center">
             <span class="desc-label">SERVIÇO</span>
-            <span class="description">{{ item.description | uppercase }}</span>
+            <span class="description">{{ item.description }}</span>
           </div>
 
           <div class="card-right">
-            <span class="date"><i class="pi pi-calendar"></i> {{ item.date | date:'dd/MM/yyyy' }}</span>
-            <span class="cost">R$ {{ item.cost | number:'1.2-2' }}</span>
+            <div class="text-right">
+              <span class="date">{{ item.date | date:'dd/MM/yyyy' }}</span>
+              <span class="cost block">R$ {{ item.cost | number:'1.2-2' }}</span>
+            </div>
+            
+            <div class="actions flex gap-2 ml-3 pl-3 border-left-1 border-gray-800">
+              <button *ngIf="item.trailer?.status === 'MAINTENANCE'" 
+                      pButton 
+                      icon="pi pi-lock-open" 
+                      class="p-button-rounded p-button-success p-button-sm mb-2" 
+                      pTooltip="Concluir Serviço (Liberar Veículo)"
+                      tooltipPosition="left"
+                      (click)="finishMaintenance(item)">
+              </button>
+              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-sm p-button-info" (click)="editMaintenance(item)"></button>
+              <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-sm p-button-danger" (click)="deleteMaintenance(item)"></button>
+            </div>
           </div>
 
         </div>
-
-        <div *ngIf="maintenances.length === 0" class="empty-state">
-          Nenhum serviço registrado.
-        </div>
+        <div *ngIf="maintenances.length === 0" class="empty-state">Nenhum registro encontrado.</div>
       </div>
     </div>
 

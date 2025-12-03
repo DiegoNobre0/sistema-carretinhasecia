@@ -19,6 +19,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { TabViewModule } from 'primeng/tabview';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-rentals',
@@ -27,9 +29,9 @@ import { TabViewModule } from 'primeng/tabview';
     CommonModule, ReactiveFormsModule, FormsModule,
     ButtonModule, DialogModule, TableModule, 
     DropdownModule, CalendarModule, InputNumberModule, 
-    TagModule, TooltipModule, TabViewModule
+    TagModule, TooltipModule, TabViewModule,ConfirmDialogModule
   ],
-  providers: [DatePipe],
+  providers: [DatePipe,ConfirmationService],
   templateUrl: './rentals.component.html',
   styleUrls: ['./rentals.component.scss']
 })
@@ -39,6 +41,10 @@ export class RentalsComponent implements OnInit {
   activeRentals: any[] = [];
   closedRentals: any[] = [];
   futureRentals: any[] = [];
+
+  // Variável para saber se estamos editando
+  isEditMode = false;
+  editingId: string | null = null;
   
   customers: any[] = [];
   trailers: any[] = []; 
@@ -73,7 +79,8 @@ export class RentalsComponent implements OnInit {
     private trailerService: TrailerService,
     private pdfService: PdfService,
     private fb: FormBuilder,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private confirmationService: ConfirmationService
   ) {
     this.rentalForm = this.fb.group({
       customerId: [null, Validators.required],
@@ -89,7 +96,7 @@ export class RentalsComponent implements OnInit {
     this.rentalForm.valueChanges.subscribe(() => this.calculateTotal());
   }
 
-  loadData() {
+  loadData() {    
     this.rentalService.getRentals().subscribe(data => {
       this.activeRentals = data.filter(r => r.status === 'OPEN');
       this.closedRentals = data.filter(r => r.status === 'CLOSED' || r.status === 'CANCELED');
@@ -106,6 +113,8 @@ export class RentalsComponent implements OnInit {
 
   showDialog() {
     this.displayModal = true;
+    this.isEditMode = false; // Modo Criação
+    this.editingId = null;
     this.rentalForm.reset();
     this.totalCalculado = 0;
     this.selectedCustomerObj = null;
@@ -114,7 +123,7 @@ export class RentalsComponent implements OnInit {
   }
 
   // --- LÓGICA DE DATAS OCUPADAS (FLUXO B) ---
-  onTrailerSelect() {
+  onTrailerSelect() {    
     const trailerId = this.rentalForm.get('trailerId')?.value;
     
     // Reseta
@@ -181,8 +190,23 @@ export class RentalsComponent implements OnInit {
         startDate: val.dates[0],
         expectedEndDate: val.dates[1],
         dailyRate: val.dailyRate,
-        signalValue: val.signalValue
+        signalValue: val.signalValue,
+        totalValue: this.totalCalculado
       };
+
+
+      if (this.isEditMode && this.editingId) {
+        // UPDATE
+        this.rentalService.updateRental(this.editingId, payload).subscribe({
+          next: () => {
+            this.displayModal = false;
+            this.loadData();
+            alert('Locação atualizada!');
+          },
+          error: () => alert('Erro ao atualizar.')
+        });
+      } else {
+       
       this.rentalService.createRental(payload).subscribe({
         next: () => {
           this.displayModal = false;
@@ -191,7 +215,8 @@ export class RentalsComponent implements OnInit {
         },
         error: (err) => alert('Erro: ' + (err.error?.error || 'Erro desconhecido'))
       });
-    }
+      }
+    }    
   }
 
   // --- DOCUMENTOS ---
@@ -290,5 +315,56 @@ export class RentalsComponent implements OnInit {
     if (today.getTime() > expected.getTime()) return 'LATE';
     if (today.getTime() === expected.getTime()) return 'TODAY';
     return 'OK';
+  }
+
+
+  // === EXCLUIR ===
+  confirmDelete(event: Event, rental: any) {
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: 'Tem certeza que deseja excluir esta locação? A carretinha será liberada.',
+      header: 'Confirmar Exclusão',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim, Excluir',
+      rejectLabel: 'Não',
+      acceptButtonStyleClass: 'p-button-danger p-button-text',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.rentalService.deleteRental(rental.id).subscribe({
+          next: () => {
+            this.loadData();
+            alert('Locação excluída!');
+          },
+          error: () => alert('Erro ao excluir.')
+        });
+      }
+    });
+  }
+
+  // === EDITAR ===
+  editRental(rental: any) {
+    this.isEditMode = true;
+    this.editingId = rental.id;
+    this.displayModal = true;
+
+    // Preenche o formulário
+    this.rentalForm.patchValue({
+      customerId: rental.customerId,
+      // Nota: Trailer pode estar travado se a lógica de data limpar, 
+      // então setamos a data primeiro
+      dates: [new Date(rental.startDate), new Date(rental.expectedEndDate)],
+      dailyRate: rental.dailyRate,
+      signalValue: rental.signalValue,
+      trailerId: rental.trailerId 
+    });
+    
+    // Força o cálculo inicial e destrava o trailer
+    this.rentalForm.get('trailerId')?.enable();
+    this.calculateTotal();
+    
+    // Pequeno delay para garantir que o dropdown de trailers carregue o valor
+    setTimeout(() => {
+        this.rentalForm.patchValue({ trailerId: rental.trailerId });
+    }, 100);
   }
 }

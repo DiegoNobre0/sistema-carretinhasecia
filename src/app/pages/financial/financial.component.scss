@@ -1,17 +1,67 @@
-.page-container { display: flex; flex-direction: column; gap: 1rem; }
-.header-action { display: flex; justify-content: space-between; align-items: center; 
-  h1 { margin: 0; color: #fff; } .subtitle { color: #888; } }
-
-.balance-card {
-  background: var(--bg-card); border: 1px solid #333; padding: 1.5rem; border-radius: 8px; width: 300px;
-  span { color: #888; font-size: 0.8rem; font-weight: bold; }
-  h2 { margin: 0.5rem 0 0 0; font-size: 2rem; color: #fff; }
-  
-  &.positive h2 { color: #00C851; }
-  &.negative h2 { color: #ff4444; }
+.page-container {
+  display: flex; flex-direction: column; gap: 1.5rem;
 }
 
-.card-table { background: var(--bg-card); border: 1px solid #333; border-radius: 8px; padding: 1rem; }
-.field { margin-bottom: 1rem; label { display: block; margin-bottom: 0.5rem; color: #ccc; } }
-.text-green-500 { color: #00C851; }
-.text-red-500 { color: #ff4444; }
+.header-action {
+  display: flex; justify-content: space-between; align-items: center;
+  h1 { margin: 0; color: #fff; font-size: 1.6rem; }
+  .subtitle { color: #888; margin-top: 0.5rem; }
+}
+
+/* --- ESTILO DO FILTRO --- */
+.filter-container {
+  background: var(--bg-card); /* #1D2136 */
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap; /* Para celular */
+
+  .filter-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    color: #FFC107; /* Amarelo */
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    i { font-size: 1.1rem; }
+  }
+
+  .filter-controls {
+    display: flex; align-items: center; gap: 1rem;
+    flex: 1;
+  }
+}
+
+/* Ajuste do Calendário para ficar escuro e largo */
+:host ::ng-deep .custom-calendar {
+  width: 300px;
+  .p-inputtext { 
+    background: #121524; 
+    border-color: #444; 
+    color: #fff; 
+  }
+}
+
+/* Card de Saldo */
+.balance-card {
+  background: var(--bg-card); border: 1px solid #333; padding: 2rem; border-radius: 10px;
+  text-align: center;
+  
+  .label { color: #888; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px; }
+  .value { font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0 0 0; }
+  
+  &.positive .value { color: #00C851; }
+  &.negative .value { color: #ff4444; }
+}
+
+.card-table { background: var(--bg-card); padding: 1rem; border-radius: 10px; border: 1px solid #333; }
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .filter-container { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .filter-controls { width: 100%; flex-wrap: wrap; }
+  :host ::ng-deep .custom-calendar { width: 100%; }
+}

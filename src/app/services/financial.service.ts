@@ -12,11 +12,23 @@ export class FinancialService {
 
   constructor(private http: HttpClient) {}
 
-  getStatement(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/financial/statement`);
+getStatement(startDate?: string, endDate?: string): Observable<any> {
+    let params = '';
+    if (startDate && endDate) {
+      params = `?startDate=${startDate}&endDate=${endDate}`;
+    }
+    return this.http.get<any>(`${this.apiUrl}/financial/statement${params}`);
   }
 
   createTransaction(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/financial`, data);
+  }
+
+  updateTransaction(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/financial/${id}`, data);
+  }
+
+  deleteTransaction(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/financial/${id}`);
   }
 }

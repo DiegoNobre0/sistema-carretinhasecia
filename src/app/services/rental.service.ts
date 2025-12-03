@@ -35,4 +35,12 @@ updateExtraCosts(id: string, extraCosts: number): Observable<any> {
 uploadContract(id: string, fileBase64: string): Observable<any> {
   return this.http.patch(`${this.apiUrl}/${id}/contract`, { fileBase64 });
 }
+
+deleteRental(id: string): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/${id}`);
+}
+
+updateRental(id: string, data: any): Observable<any> {
+  return this.http.put(`${this.apiUrl}/${id}`, data);
+}
 }
