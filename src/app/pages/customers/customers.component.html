@@ -69,11 +69,116 @@
 
   <p-dialog header="Cliente" [(visible)]="displayModal" [modal]="true" [style]="{width: '700px'}" styleClass="custom-dialog">
      <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+       
        <p-tabView (onChange)="onTabChange($event)">
-          </p-tabView>
-       <div class="mt-4 flex justify-content-end">
-         <button pButton label="Salvar" type="submit"></button>
+          
+          <p-tabPanel header="Pessoa Física">
+            <div class="flex flex-column gap-3 pt-2">
+              
+              <div class="field">
+                <label>Nome Completo</label>
+                <input pInputText formControlName="name" class="w-full" placeholder="Nome do cliente">
+              </div>
+
+              <div class="form-row flex gap-3">
+                <div class="field flex-1">
+                  <label>CPF</label>
+                  <p-inputMask mask="999.999.999-99" formControlName="document" styleClass="w-full" placeholder="000.000.000-00"></p-inputMask>
+                </div>
+                <div class="field flex-1">
+                  <label>Celular/WhatsApp</label>
+                  <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full" placeholder="(00) 00000-0000"></p-inputMask>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>E-mail</label>
+                <input pInputText formControlName="email" class="w-full">
+              </div>
+
+              <div class="field">
+                <label>Endereço Completo</label>
+                <input pInputText formControlName="street" class="w-full" placeholder="Rua, Número, Bairro...">
+              </div>
+
+              <div class="form-row flex gap-3 mt-2">
+                
+                <div class="field flex-1">
+                   <label>Foto CNH</label>
+                   <div class="file-upload-box">
+                     <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*" id="fileCNH" hidden>
+                     <label for="fileCNH" class="upload-btn w-full justify-content-center">
+                       <i class="pi pi-camera"></i>
+                       <span class="text-sm ml-2">{{ fileNameCNH || 'Escolher Foto' }}</span>
+                     </label>
+                   </div>
+                </div>
+
+                <div class="field flex-1">
+                   <label>Comprovante Residência</label>
+                   <div class="file-upload-box">
+                     <input type="file" (change)="onFileSelected($event, 'proofUrl')" accept="image/*" id="fileProof" hidden>
+                     <label for="fileProof" class="upload-btn w-full justify-content-center">
+                       <i class="pi pi-file"></i>
+                       <span class="text-sm ml-2">{{ fileNameProof || 'Escolher Foto' }}</span>
+                     </label>
+                   </div>
+                </div>
+
+              </div>
+            </div>
+          </p-tabPanel>
+
+          <p-tabPanel header="Pessoa Jurídica">
+            <div class="flex flex-column gap-3 pt-2">
+              
+              <div class="field">
+                <label>Razão Social</label>
+                <input pInputText formControlName="name" class="w-full">
+              </div>
+
+              <div class="form-row flex gap-3">
+                <div class="field flex-1">
+                  <label>CNPJ</label>
+                  <p-inputMask mask="99.999.999/9999-99" formControlName="document" styleClass="w-full" placeholder="00.000.000/0000-00"></p-inputMask>
+                </div>
+                <div class="field flex-1">
+                  <label>Telefone</label>
+                  <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full"></p-inputMask>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>E-mail</label>
+                <input pInputText formControlName="email" class="w-full">
+              </div>
+
+              <div class="field">
+                <label>Endereço da Empresa</label>
+                <input pInputText formControlName="street" class="w-full">
+              </div>
+
+              <div class="field">
+                 <label>Contrato Social / Docs</label>
+                 <div class="file-upload-box">
+                   <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*" id="fileDocPJ" hidden>
+                   <label for="fileDocPJ" class="upload-btn w-full justify-content-center">
+                     <i class="pi pi-folder-open"></i>
+                     <span class="text-sm ml-2">{{ fileNameCNH || 'Anexar Documento' }}</span>
+                   </label>
+                 </div>
+              </div>
+
+            </div>
+          </p-tabPanel>
+
+       </p-tabView>
+
+       <div class="mt-4 flex justify-content-end gap-2 border-top-1 border-gray-800 pt-3">
+         <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
+         <button pButton label="Salvar Cliente" type="submit" class="p-button-warning" [disabled]="!customerForm.valid"></button>
        </div>
+
      </form>
   </p-dialog>
 

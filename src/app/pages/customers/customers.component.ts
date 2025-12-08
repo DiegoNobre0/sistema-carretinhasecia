@@ -89,13 +89,26 @@ export class CustomersComponent implements OnInit {
     this.customerService.getCustomers().subscribe(data => this.customers = data);
   }
 
-  showDialog() {
-    this.displayModal = true;
+showDialog() {
     this.isEditMode = false;
     this.selectedCustomerId = null;
-    this.customerForm.reset({ type: 'PF' });
+    
+    // 1. Reseta o formulário garantindo valores padrão
+    // Isso é crucial para que o <p-tabView> saiba que deve mostrar a aba 'PF'
+    this.customerForm.reset({ 
+      type: 'PF',
+      name: '',
+      document: '',
+      phone: '',
+      email: '',
+      // ... outros campos se necessário
+    });
+
     this.fileNameCNH = '';
     this.fileNameProof = '';
+
+    // 2. SÓ AGORA abre o modal, com tudo pronto
+    this.displayModal = true; 
   }
 
   editCustomer(customer: any) {
