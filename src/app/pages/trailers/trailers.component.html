@@ -34,14 +34,37 @@
       </div>
 
       <div class="card-content">
-        <div class="info-header">
+        <div class="info-header mb-3">
           <h3 class="plate">{{ item.plate }}</h3>
-          <span class="model">{{ item.model }}</span>
+          <span class="model text-yellow-500 font-bold">{{ item.model }}</span>
         </div>
         
-        <div class="info-detail">
-          <i class="pi pi-arrows-h"></i>
-          <span>{{ item.size }}</span>
+        <div class="specs-grid">
+          
+          <div class="spec-item" pTooltip="Dimensões" tooltipPosition="top">
+            <i class="pi pi-arrows-h text-primary"></i>
+            <span>{{ item.size }}</span>
+          </div>
+
+          <div class="spec-item" pTooltip="Capacidade de Carga" tooltipPosition="top">
+            <i class="pi pi-box text-orange-400"></i>
+            <span>{{ item.capacity || '-' }}</span>
+          </div>
+
+          <div class="spec-item" pTooltip="Ano Fab./Mod." tooltipPosition="top">
+            <i class="pi pi-calendar text-green-400"></i>
+            <span>{{ item.manufacturingYear }}/{{ item.modelYear }}</span>
+          </div>
+
+          <div class="spec-item" pTooltip="Quantidade de Eixos" tooltipPosition="top">
+            <i class="pi pi-objects-column text-blue-400"></i> <span>{{ item.axles }} Eixo(s)</span>
+          </div>
+
+          <div class="spec-item" pTooltip="Cor do Veículo" tooltipPosition="top">
+            <i class="pi pi-palette text-purple-400"></i>
+            <span>{{ item.color || 'Preta' }}</span>
+          </div>
+
         </div>
       </div>
 
@@ -70,45 +93,74 @@
     [header]="isEditMode ? 'Editar Carretinha' : 'Nova Carretinha'" 
     [(visible)]="displayModal" 
     [modal]="true" 
-    [style]="{width: '450px'}"
+    [style]="{width: '500px'}"
     [draggable]="false" 
     [resizable]="false">
     
-    <form [formGroup]="trailerForm" (ngSubmit)="onSubmit()" class="form-grid">
+    <form [formGroup]="trailerForm" (ngSubmit)="onSubmit()" class="form-grid pt-2">
       
-      <div class="field">
-        <label>Placa</label>
-        <input pInputText formControlName="plate" class="w-full text-uppercase" placeholder="ABC-1234">
+      <div class="form-row flex gap-3">
+        <div class="field flex-1">
+          <label>Placa</label>
+          <input pInputText formControlName="plate" class="w-full text-uppercase font-bold" placeholder="ABC-1234">
+        </div>
+        <div class="field flex-1">
+          <label>Modelo</label>
+          <input pInputText formControlName="model" class="w-full" placeholder="Ex: Fazendinha">
+        </div>
       </div>
 
-      <div class="field">
-        <label>Modelo</label>
-        <input pInputText formControlName="model" class="w-full" placeholder="Ex: Fazendinha">
+      <div class="form-row flex gap-3">
+        <div class="field flex-1">
+          <label>Cor</label>
+          <input pInputText formControlName="color" class="w-full" placeholder="Ex: Preta">
+        </div>
+        <div class="field flex-1">
+          <label>Nº Eixos</label>
+          <input type="number" pInputText formControlName="axles" class="w-full" min="1" max="3">
+        </div>
       </div>
 
-      <div class="field">
-        <label>Tamanho (Dimensões)</label>
-        <input pInputText formControlName="size" class="w-full" placeholder="Ex: 2.00 x 1.20">
+      <div class="form-row flex gap-3">
+        <div class="field flex-1">
+          <label>Ano Fab.</label>
+          <input pInputText formControlName="manufacturingYear" class="w-full" placeholder="2024">
+        </div>
+        <div class="field flex-1">
+          <label>Ano Mod.</label>
+          <input pInputText formControlName="modelYear" class="w-full" placeholder="2025">
+        </div>
       </div>
 
-      <div class="field">
+      <div class="form-row flex gap-3">
+         <div class="field flex-1">
+            <label>Dimensões</label>
+            <input pInputText formControlName="size" class="w-full" placeholder="Ex: 2.00 x 1.20">
+         </div>
+         <div class="field flex-1">
+            <label>Capacidade (kg)</label>
+            <input pInputText formControlName="capacity" class="w-full" placeholder="Ex: 500 kg">
+         </div>
+      </div>
+
+      <div class="field mt-2">
         <label>Foto do Veículo</label>
         <div class="file-upload-box">
           <input type="file" (change)="onFileSelected($event)" accept="image/*" id="fileTrailer" hidden>
-          <label for="fileTrailer" class="upload-btn">
+          <label for="fileTrailer" class="upload-btn w-full justify-content-center p-3 border-round border-1 border-gray-600 cursor-pointer flex align-items-center gap-2 hover:bg-gray-800 transition-colors">
             <i class="pi pi-camera"></i>
             <span>{{ trailerForm.get('photoUrl')?.value ? 'Alterar Foto' : 'Escolher Foto' }}</span>
           </label>
           
-          <div *ngIf="trailerForm.get('photoUrl')?.value" class="preview-mini">
-            <img [src]="trailerForm.get('photoUrl')?.value">
+          <div *ngIf="trailerForm.get('photoUrl')?.value" class="preview-mini mt-2 text-center">
+            <img [src]="trailerForm.get('photoUrl')?.value" style="max-height: 100px; border-radius: 8px; border: 1px solid #444;">
           </div>
         </div>
       </div>
 
-      <div class="flex justify-content-end gap-2 mt-4">
+      <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 border-gray-800">
         <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
-        <button pButton [label]="isEditMode ? 'Salvar Alterações' : 'Cadastrar'" type="submit" class="p-button-warning"></button>
+        <button pButton [label]="isEditMode ? 'Salvar Alterações' : 'Cadastrar'" type="submit" class="p-button-warning" [disabled]="!trailerForm.valid"></button>
       </div>
 
     </form>

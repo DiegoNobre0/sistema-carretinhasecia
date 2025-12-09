@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { TrailerService } from '../../services/trailer.service';
-import { ImageCompressService } from '../../services/image-compress.service'; // <--- IMPORTE O SERVIÇO
+import { ImageCompressService } from '../../services/image-compress.service';
 
 // PrimeNG
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber'; // Importante para o campo de eixos
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
@@ -22,7 +23,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, FormsModule,
-    ButtonModule, DialogModule, InputTextModule, 
+    ButtonModule, DialogModule, InputTextModule, InputNumberModule,
     ConfirmDialogModule, ToastModule, TagModule, TooltipModule
   ],
   providers: [ConfirmationService, MessageService],
@@ -42,7 +43,7 @@ export class TrailersComponent implements OnInit {
 
   constructor(
     private trailerService: TrailerService,
-    private imageService: ImageCompressService, // <--- INJETE AQUI
+    private imageService: ImageCompressService,
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
     private messageService: MessageService
@@ -51,6 +52,12 @@ export class TrailersComponent implements OnInit {
       plate: ['', Validators.required],
       model: ['', Validators.required],
       size: ['', Validators.required],
+      // Novos campos técnicos
+      color: ['Preta'],
+      manufacturingYear: [new Date().getFullYear().toString()],
+      modelYear: [new Date().getFullYear().toString()],
+      capacity: [''],
+      axles: [1],
       photoUrl: ['']
     });
   }
@@ -82,7 +89,15 @@ export class TrailersComponent implements OnInit {
     this.displayModal = true;
     this.isEditMode = false;
     this.editingId = null;
-    this.trailerForm.reset();
+    
+    // Reseta o formulário com valores padrão úteis
+    this.trailerForm.reset({
+      color: 'Preta',
+      axles: 1,
+      manufacturingYear: new Date().getFullYear().toString(),
+      modelYear: new Date().getFullYear().toString(),
+      photoUrl: ''
+    });
   }
 
   editTrailer(trailer: any) {
@@ -90,11 +105,19 @@ export class TrailersComponent implements OnInit {
     this.isEditMode = true;
     this.editingId = trailer.id;
     
+    // CORREÇÃO: PatchValue agora inclui os novos campos
     this.trailerForm.patchValue({
       plate: trailer.plate,
       model: trailer.model,
       size: trailer.size,
-      photoUrl: trailer.photoUrl
+      photoUrl: trailer.photoUrl,
+      
+      // Novos campos
+      color: trailer.color,
+      manufacturingYear: trailer.manufacturingYear,
+      modelYear: trailer.modelYear,
+      capacity: trailer.capacity,
+      axles: trailer.axles
     });
   }
 

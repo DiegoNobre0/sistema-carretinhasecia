@@ -32,7 +32,13 @@ import { TooltipModule } from 'primeng/tooltip';
   styleUrls: ['./customers.component.scss']
 })
 export class CustomersComponent implements OnInit {
-  
+
+displayDocumentModal = false;
+  sanitizedDocUrl: SafeResourceUrl | null = null;
+  currentBlobUrl: string | null = null; // Variável para limpeza de memória
+
+
+
   customers: any[] = [];
   
   // Modais
@@ -265,19 +271,93 @@ async onFileSelected(event: any, fieldName: string) {
   // 3. NOVO: Ver Contrato Assinado (PDF) dentro do Histórico
   viewContract(rental: any) {
     if (rental.contractUrl) {
-      this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rental.contractUrl);
-      this.displayContractModal = true;
+      try {
+        // 1. Limpeza de memória anterior (importante!)
+        if (this.currentBlobUrl) {
+          URL.revokeObjectURL(this.currentBlobUrl);
+          this.currentBlobUrl = null;
+        }
+
+        const fileData = rental.contractUrl;
+
+        // 2. Verifica se é Base64 (arquivo subido no sistema)
+        if (fileData.startsWith('data:')) {
+          // Converte para Blob
+          const blob = this.base64ToBlob(fileData);
+          
+          // Cria URL temporária (blob:http://...)
+          this.currentBlobUrl = URL.createObjectURL(blob);
+          
+          // Sanitiza
+          this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.currentBlobUrl);
+        } else {
+          // Caso seja uma URL externa normal (ex: AWS S3)
+          this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(fileData);
+        }
+
+        // 3. Abre o modal
+        this.displayContractModal = true;
+
+      } catch (error) {
+        console.error('Erro ao abrir contrato:', error);
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Arquivo inválido ou corrompido.' });
+      }
     } else {
       this.messageService.add({ severity: 'info', summary: 'Info', detail: 'Nenhum contrato assinado para esta locação.' });
     }
   }
+ viewDocumentUrl(base64Data: string | null) {
+    if (base64Data) {
+      try {
+        // Limpa anterior se houver
+        this.clearBlob();
 
-  viewDocumentUrl(url: string) {
-    if (url) {
-      // Sanitiza a URL para o navegador confiar nela
-      this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-      // Abre o mesmo modal que usamos para contratos
-      this.displayContractModal = true;
+        if (base64Data.startsWith('data:')) {
+          // 1. Converte Base64 para Blob
+          const blob = this.base64ToBlob(base64Data);
+          
+          // 2. Cria URL temporária
+          this.currentBlobUrl = URL.createObjectURL(blob);
+          
+          // 3. Sanitiza
+          this.sanitizedDocUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.currentBlobUrl);
+        } else {
+          // Caso seja link externo (S3, etc)
+          this.sanitizedDocUrl = this.sanitizer.bypassSecurityTrustResourceUrl(base64Data);
+        }
+
+        this.displayDocumentModal = true;
+
+      } catch (e) {
+        console.error('Erro ao abrir documento:', e);
+      }
+    }
+  }
+
+  // Função Auxiliar: Base64 -> Blob
+  base64ToBlob(base64: string) {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  }
+
+  // Limpeza de Memória ao Fechar
+  onCloseDocumentModal() {
+    this.displayDocumentModal = false;
+    this.sanitizedDocUrl = null;
+    this.clearBlob();
+  }
+
+  clearBlob() {
+    if (this.currentBlobUrl) {
+      URL.revokeObjectURL(this.currentBlobUrl);
+      this.currentBlobUrl = null;
     }
   }
 }

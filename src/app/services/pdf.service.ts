@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import jsPDF from 'jspdf';
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 
@@ -270,4 +271,117 @@ export class PdfService {
 
   pdfMake.createPdf(docDefinition).open();
 }
+
+
+
+
+generateReturnTerm(rental: any, returnData: any) {
+    const trailer = rental.trailer;
+    const customer = rental.customer;
+
+    const doc = new jsPDF();
+    const margin = 20;
+    const pageWidth = 170; // Largura útil para texto (A4 - margens)
+    let cursorY = 20;
+    const lineHeight = 6;
+
+    // --- FUNÇÃO AUXILIAR PARA QUEBRAR TEXTO ---
+    const addText = (text: string, isBold: boolean = false, fontSize: number = 11) => {
+      doc.setFont('times', isBold ? 'bold' : 'normal');
+      doc.setFontSize(fontSize);
+      
+      const splitText = doc.splitTextToSize(text, pageWidth);
+      doc.text(splitText, margin, cursorY);
+      
+      // Atualiza a posição Y para a próxima linha
+      cursorY += (splitText.length * lineHeight) + 2;
+    };
+
+    // 1. TÍTULO
+    doc.setFontSize(14);
+    doc.setFont('times', 'bold');
+    doc.text('TERMO DE DEVOLUÇÃO', 105, cursorY, { align: 'center' });
+    cursorY += 15;
+
+    // 2. CABEÇALHO
+    const startDateStr = new Date(rental.startDate).toLocaleDateString('pt-BR');
+    const header = `Pelo presente instrumento, fica comprovada a devolução do objeto de locação descrito no contrato firmado em ${startDateStr}, entre YARA ELLEN SILVA DIAS ME (locadora), inscrita no CNPJ nº 34.607.144/0001-22, e ${customer.name.toUpperCase()} (locatário), inscrito no CPF/CNPJ nº ${customer.document}.`;
+    addText(header);
+    cursorY += 5;
+
+    // 3. OBJETO (Especificações da Carretinha)
+    addText('O objeto da locação é um reboque com as seguintes especificações:');
+    doc.setFont('times', 'normal');
+    
+    // Lista de detalhes técnicos
+    const specs = [
+      `Modelo: ${trailer.model}`,
+      `Placa: ${trailer.plate}`,
+      `Cor: ${trailer.color || 'Preta'}`,
+      `Ano Fab/Mod: ${trailer.manufacturingYear || ''}/${trailer.modelYear || ''}`,
+      `Capacidade: ${trailer.capacity || 'N/A'}`,
+      `Eixos: ${trailer.axles || 1}`
+    ];
+
+    specs.forEach(spec => {
+      doc.text(`• ${spec}`, margin + 5, cursorY);
+      cursorY += 6;
+    });
+    cursorY += 5;
+
+    // 4. DATA DA DEVOLUÇÃO REAL
+    const devDate = new Date(returnData.returnDate).toLocaleDateString('pt-BR');
+    const devTime = new Date(returnData.returnTime).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    addText(`A locadora declara ter recebido o objeto no dia ${devDate}, às ${devTime}.`);
+    cursorY += 5;
+
+    // 5. CLÁUSULA PRIMEIRA (Lógica Financeira)
+    const lateFee = returnData.lateFee || 0;
+    const damageCost = returnData.damageCost || 0;
+    const cleaningFee = returnData.cleaningFee || 0;
+    const totalExtra = lateFee + damageCost + cleaningFee;
+
+    if (totalExtra === 0) {
+      // CENÁRIO A: Devolução Perfeita
+      addText('CLÁUSULA PRIMEIRA: O locatário declara estar ciente e em conformidade com os termos estabelecidos no contrato, tendo realizado a devolução do objeto locado dentro do prazo estipulado, sem gerar custos adicionais.');
+    } else {
+      // CENÁRIO B: Com Custos Extras
+      addText('CLÁUSULA PRIMEIRA: Em conformidade com as cláusulas contratuais, foram constatados custos adicionais na devolução:');
+      
+      if (lateFee > 0) doc.text(`- Multa por atraso: R$ ${lateFee.toFixed(2)}`, margin + 5, cursorY+=6);
+      if (cleaningFee > 0) doc.text(`- Taxa de limpeza: R$ ${cleaningFee.toFixed(2)}`, margin + 5, cursorY+=6);
+      if (returnData.hasDamage) {
+        const desc = returnData.damageDescription ? `(${returnData.damageDescription})` : '';
+        doc.text(`- Avarias ${desc}: R$ ${damageCost.toFixed(2)}`, margin + 5, cursorY+=6);
+      }
+      cursorY += 8;
+
+      const totalStr = totalExtra.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      addText(`Total de prejuízos devidos: R$ ${totalStr}. O pagamento deverá ser efetuado imediatamente. Caso não seja realizado, incidirão juros e multa conforme contrato.`, true);
+    }
+    cursorY += 5;
+
+    // 6. CLÁUSULA SEGUNDA (Responsabilidade)
+    addText('CLÁUSULA SEGUNDA: O locatário assume total responsabilidade por quaisquer danos emergentes, lucros cessantes, danos reflexos ou danos causados a terceiros decorrentes do uso do objeto locado durante o período de vigência do contrato, bem como multas de trânsito ocultas.');
+    cursorY += 15;
+
+    // 7. ASSINATURAS
+    const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    doc.text(`Camaçari, Bahia. ${today}.`, margin, cursorY);
+    
+    cursorY += 25;
+    
+    // Linhas de Assinatura
+    doc.line(margin, cursorY, margin + 60, cursorY); // Locador
+    doc.line(margin + 80, cursorY, margin + 140, cursorY); // Locatário
+
+    cursorY += 5;
+    doc.setFontSize(9);
+    doc.text('LOCADOR (Yara Ellen Silva Dias)', margin, cursorY);
+    doc.text('LOCATÁRIO', margin + 80, cursorY);
+
+    // Salva o arquivo
+    doc.save(`Termo_Devolucao_${customer.name.split(' ')[0]}.pdf`);
+  }
+
 }

@@ -13,6 +13,7 @@ import { BackupComponent } from './pages/backup/backup.component';
 import { FinancialComponent } from './pages/financial/financial.component';
 import { AgendaComponent } from './pages/agenda/agenda.component';
 import { adminGuard } from './core/guards/admin.guard';
+import { UsersComponent } from './pages/users/users.component';
 
 const routes: Routes = [
   // Rota Pública (Login)
@@ -38,7 +39,8 @@ const routes: Routes = [
       { path: 'senatran', component: SenatranComponent },
       { path: 'backup', component: BackupComponent },
       { path: 'financeiro', component: FinancialComponent },
-      { path: 'agenda', component: AgendaComponent }
+      { path: 'agenda', component: AgendaComponent },
+      { path: 'usuarios', component: UsersComponent, canActivate: [adminGuard] }
     ]
   },
 

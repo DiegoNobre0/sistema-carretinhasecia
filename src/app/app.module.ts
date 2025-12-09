@@ -12,6 +12,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import localePt from '@angular/common/locales/pt';
 import { registerLocaleData } from '@angular/common';
+import { UsersComponent } from './pages/users/users.component';
 
 
 registerLocaleData(localePt);
@@ -20,7 +21,6 @@ registerLocaleData(localePt);
 @NgModule({
   declarations: [
     AppComponent
- 
   ],
   imports: [
     BrowserModule,

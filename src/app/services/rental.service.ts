@@ -43,4 +43,13 @@ deleteRental(id: string): Observable<any> {
 updateRental(id: string, data: any): Observable<any> {
   return this.http.put(`${this.apiUrl}/${id}`, data);
 }
+
+finishRental(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}/finish`, data);
+  }
+
+  // NOVO: Upload do Termo de Devolução
+  uploadReturnTerm(id: string, file: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}/upload-return`, { file });
+  }
 }

@@ -1,106 +1,235 @@
+/* --- LAYOUT GERAL --- */
 .page-container {
-  display: flex; flex-direction: column; gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
 }
 
-/* HEADER COM BUSCA */
+/* HEADER COM BUSCA (Igual ao de Clientes) */
 .header-action {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 1.5rem; border-radius: 12px; border: 1px solid #333;
-  background: var(--bg-card);
-  flex-wrap: wrap; gap: 1rem;
+  background: #1e2126;
+  border: 1px solid #333;
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
   .title-area {
-    h1 { margin: 0; color: #fff; font-size: 1.5rem; }
-    .subtitle { color: #888; margin: 0; font-size: 0.9rem; }
+    h1 { margin: 0; color: #fff; font-size: 1.5rem; font-weight: 700; }
+    .subtitle { color: #9ca3af; margin: 0.5rem 0 0 0; font-size: 0.9rem; }
   }
 
   .actions-area {
     display: flex; gap: 1rem; align-items: center;
-    .search-box input { background: #121524; border: 1px solid #444; color: #fff; width: 250px; }
+    
+    .search-box {
+      input { 
+        background: #12151a; 
+        border: 1px solid #444; 
+        color: #fff; 
+        width: 280px; 
+        &:focus { border-color: #eab308; }
+      }
+      i { color: #9ca3af; }
+    }
   }
 }
 
-/* GRID DE CARDS */
+/* GRID DE CARRETINHAS */
 .trailers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  /* Cria colunas automáticas com largura mínima de 300px */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
 }
 
+/* O CARD DA CARRETINHA */
 .trailer-card {
-  background: var(--bg-card);
+  background: #1e2126;
   border: 1px solid #333;
   border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 
   &:hover {
     transform: translateY(-5px);
     border-color: #555;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
   }
 
-  /* IMAGEM NO TOPO */
+  /* 1. Área da Imagem */
   .card-image {
-    height: 160px;
-    background: #121524;
+    height: 180px;
+    background: #12151a;
     position: relative;
-    display: flex; align-items: center; justify-content: center;
-    
-    img { width: 100%; height: 100%; object-fit: cover; }
-    .placeholder { font-size: 3rem; color: #333; }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-bottom: 1px solid #333;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+
+    /* Efeito de zoom na imagem ao passar o mouse no card */
+    &:hover img { transform: scale(1.05); }
+
+    .placeholder {
+      font-size: 3rem;
+      color: #333;
+    }
 
     .status-badge {
-      position: absolute; top: 10px; right: 10px; z-index: 2;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
   }
 
-  /* CONTEÚDO */
+  /* 2. Conteúdo do Card */
   .card-content {
-    padding: 1.2rem;
-    flex: 1; /* Empurra o footer pra baixo */
-    
+    padding: 1.25rem;
+    flex: 1; /* Ocupa o espaço restante verticalmente */
+    display: flex;
+    flex-direction: column;
+
     .info-header {
-      margin-bottom: 0.5rem;
-      .plate { margin: 0; font-size: 1.2rem; color: #fff; letter-spacing: 1px; }
-      .model { color: #888; font-size: 0.9rem; }
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #2d333b;
+      padding-bottom: 0.75rem;
+
+      .plate {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: 1px;
+      }
+
+      .model {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: rgba(234, 179, 8, 0.1); /* Amarelo translúcido */
+        color: #eab308;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 700;
+      }
     }
 
-    .info-detail {
-      display: flex; align-items: center; gap: 0.5rem;
-      background: rgba(255,255,255,0.05);
-      padding: 0.5rem; border-radius: 6px;
-      color: #ccc; font-size: 0.9rem;
-      i { color: var(--primary-color); }
+    /* --- O NOVO GRID DE ESPECIFICAÇÕES --- */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* 2 colunas */
+      gap: 0.75rem;
+
+      .spec-item {
+        background: #181b21; /* Fundo mais escuro que o card */
+        border: 1px solid #2d333b;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: #d1d5db; /* Cinza claro */
+        transition: background 0.2s, border-color 0.2s;
+        cursor: default;
+
+        &:hover {
+          background: #252a33;
+          border-color: #4b5563;
+        }
+
+        i { font-size: 1rem; opacity: 0.9; }
+        
+        span {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis; /* Trunca texto longo com ... */
+          font-weight: 500;
+        }
+      }
     }
   }
 
-  /* AÇÕES */
+  /* 3. Rodapé de Ações */
   .card-actions {
+    padding: 0.75rem 1.25rem;
+    background: #181b21;
     border-top: 1px solid #333;
-    padding: 0.8rem;
-    display: flex; justify-content: space-between;
-    background: rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
   }
 }
 
-/* UPLOAD ESTILIZADO */
-.file-upload-box {
-  display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;
-  
-  .upload-btn {
-    display: flex; align-items: center; gap: 0.5rem;
-    background: #333; color: #fff; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; border: 1px solid #444;
-    &:hover { background: #444; }
+/* --- ESTILOS DO MODAL (FORMULÁRIO) --- */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #9ca3af;
+    font-size: 0.9rem;
   }
-  .preview-mini img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #555; }
+
+  /* Botão de Upload Customizado */
+  .file-upload-box {
+    .upload-btn {
+      background: #181b21;
+      transition: all 0.2s;
+      &:hover {
+        background: #252a33;
+        border-color: #eab308 !important; /* Borda amarela no hover */
+        color: #fff;
+      }
+    }
+  }
 }
 
-/* Ajustes Mobile */
-@media (max-width: 600px) {
-  .header-action { flex-direction: column; align-items: flex-start; }
-  .actions-area { width: 100%; flex-direction: column; }
-  .search-box input { width: 100% !important; }
-  .p-button { width: 100%; }
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+  .header-action {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .actions-area {
+      flex-direction: column;
+      width: 100%;
+      
+      .search-box input { width: 100%; }
+      button { width: 100%; }
+    }
+  }
+
+  .trailers-grid {
+    grid-template-columns: 1fr; /* 1 coluna no celular */
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 1rem !important;
+  }
 }

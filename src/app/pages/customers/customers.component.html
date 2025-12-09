@@ -6,7 +6,7 @@
       <h1>Gestão de Clientes</h1>
       <p class="subtitle">Cadastre e gerencie seus locatários.</p>
     </div>
-    <button pButton label="+ Novo Cliente" icon="pi pi-user-plus" class="p-button-primary" (click)="showDialog()"></button>
+    <button pButton label="Novo Cliente" icon="pi pi-user-plus" class="p-button-primary" (click)="showDialog()"></button>
   </div>
 
   <div class="card-table">
@@ -339,10 +339,18 @@
               <td class="text-center">
                 <button *ngIf="h.contractUrl" 
                         pButton icon="pi pi-file-pdf" 
-                        class="p-button-rounded p-button-text p-button-danger hover:bg-red-900" 
-                        pTooltip="Ver PDF"
+                        class="p-button-rounded p-button-success  p-button-danger " 
+                        pTooltip="Contrato"
+                        tooltipPosition="top"
                         (click)="viewContract(h)">
                 </button>
+                <button *ngIf="h.returnTermUrl" 
+                            pButton icon="pi pi-file-check" 
+                            class="p-button-rounded p-button-success p-button-outlined p-button-sm" 
+                            pTooltip="Termo de Devolução"
+                            tooltipPosition="top"
+                            (click)="viewDocumentUrl(h.returnTermUrl)">
+                    </button>
                 <span *ngIf="!h.contractUrl" class="text-gray-600 text-xs"><i class="pi pi-minus"></i></span>
               </td>
 
@@ -356,6 +364,7 @@
   <p-dialog 
     header="Contrato Assinado" 
     [(visible)]="displayContractModal" 
+    (onHide)="onCloseDocumentModal()"
     [modal]="true" 
     [style]="{width: '90%', height: '90%'}" 
     [maximizable]="true">

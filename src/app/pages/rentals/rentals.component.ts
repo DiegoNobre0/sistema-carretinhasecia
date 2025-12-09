@@ -19,8 +19,13 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { TabViewModule } from 'primeng/tabview';
-import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { ToastModule } from 'primeng/toast';
+
+// Services PrimeNG
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-rentals',
@@ -29,49 +34,52 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     CommonModule, ReactiveFormsModule, FormsModule,
     ButtonModule, DialogModule, TableModule, 
     DropdownModule, CalendarModule, InputNumberModule, 
-    TagModule, TooltipModule, TabViewModule,ConfirmDialogModule
+    TagModule, TooltipModule, TabViewModule, ConfirmDialogModule, 
+    CheckboxModule, InputTextareaModule, ToastModule
   ],
-  providers: [DatePipe,ConfirmationService],
+  providers: [DatePipe, ConfirmationService, MessageService],
   templateUrl: './rentals.component.html',
   styleUrls: ['./rentals.component.scss']
 })
 export class RentalsComponent implements OnInit {
-  
-  // Listas
+  currentBlobUrl: string | null = null;
+  // Listas de Dados
   activeRentals: any[] = [];
   closedRentals: any[] = [];
   futureRentals: any[] = [];
-
-  // Variável para saber se estamos editando
-  isEditMode = false;
-  editingId: string | null = null;
   
   customers: any[] = [];
   trailers: any[] = []; 
 
-  // Variável para bloquear datas no calendário (Dias Vermelhos)
+  // Variáveis de Controle
+  isEditMode = false;
+  editingId: string | null = null;
   disabledDates: Date[] = []; 
 
-  // Modais
+  // --- MODAL DE LOCAÇÃO (CRIAÇÃO) ---
   displayModal = false;
   rentalForm: FormGroup;
   totalCalculado: number = 0;
   diasCalculados: number = 0;
+  
+  // Resumo Visual
+  selectedCustomerObj: any = null;
+  selectedTrailerObj: any = null;
 
+  // --- MODAL DE DEVOLUÇÃO (FINALIZAÇÃO) ---
   displayReturnModal = false;
-  selectedRentalId: string | null = null;
-  extraCostsInput: number = 0;
+  returnForm: FormGroup;
+  selectedRental: any = null; // A locação sendo finalizada
+  returnFile: File | null = null; // O arquivo assinado para upload
 
+  // --- MODAL DE CUSTOS EXTRAS ---
   displayCostModal = false;
   editingRental: any = null;
   costInput: number = 0;
 
+  // --- MODAL DE PDF ---
   displayContractModal = false;
   sanitizedContractUrl: SafeResourceUrl | null = null;
-
-  // Resumo Visual
-  selectedCustomerObj: any = null;
-  selectedTrailerObj: any = null;
 
   constructor(
     private rentalService: RentalService,
@@ -80,14 +88,27 @@ export class RentalsComponent implements OnInit {
     private pdfService: PdfService,
     private fb: FormBuilder,
     private sanitizer: DomSanitizer,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private messageService: MessageService
   ) {
+    // 1. Form da Locação
     this.rentalForm = this.fb.group({
       customerId: [null, Validators.required],
       trailerId: [null, Validators.required],
       dates: [null, Validators.required],
       dailyRate: [null, Validators.required],
       signalValue: [0]
+    });
+
+    // 2. Form da Devolução
+    this.returnForm = this.fb.group({
+      returnDate: [new Date(), Validators.required],
+      returnTime: [new Date(), Validators.required],
+      hasDamage: [false],
+      damageDescription: [''],
+      damageCost: [0],
+      lateFee: [0],
+      cleaningFee: [0]
     });
   }
 
@@ -96,16 +117,22 @@ export class RentalsComponent implements OnInit {
     this.rentalForm.valueChanges.subscribe(() => this.calculateTotal());
   }
 
+  // --- CARREGAMENTO DE DADOS ---
   loadData() {    
-    this.rentalService.getRentals().subscribe(data => {
-      this.activeRentals = data.filter(r => r.status === 'OPEN');
-      this.closedRentals = data.filter(r => r.status === 'CLOSED' || r.status === 'CANCELED');
-      this.futureRentals = data.filter(r => r.status === 'RESERVED');
+    // Locações
+    this.rentalService.getRentals().subscribe({
+      next: (data) => {
+        this.activeRentals = data.filter(r => r.status === 'OPEN');
+        this.closedRentals = data.filter(r => r.status === 'CLOSED' || r.status === 'CANCELED');
+        this.futureRentals = data.filter(r => r.status === 'RESERVED');
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar locações.' })
     });
 
+    // Clientes
     this.customerService.getCustomers().subscribe(data => this.customers = data);
     
-    // CARREGA TODAS AS CARRETINHAS (Para o Fluxo B)
+    // Carretinhas (Disponíveis)
     this.trailerService.getTrailers().subscribe(data => {
       this.trailers = data.filter(t => t.status !== 'MAINTENANCE');
     });
@@ -113,29 +140,28 @@ export class RentalsComponent implements OnInit {
 
   showDialog() {
     this.displayModal = true;
-    this.isEditMode = false; // Modo Criação
+    this.isEditMode = false;
     this.editingId = null;
     this.rentalForm.reset();
     this.totalCalculado = 0;
     this.selectedCustomerObj = null;
     this.selectedTrailerObj = null;
-    this.disabledDates = []; // Limpa calendário
+    this.disabledDates = []; 
   }
 
-  // --- LÓGICA DE DATAS OCUPADAS (FLUXO B) ---
+  // --- LÓGICA DE DATAS OCUPADAS ---
   onTrailerSelect() {    
     const trailerId = this.rentalForm.get('trailerId')?.value;
     
-    // Reseta
     this.disabledDates = [];
     this.rentalForm.patchValue({ dates: null }); 
     this.calculateTotal();
 
     if (trailerId) {
-      // 1. Atualiza objeto visual
       this.selectedTrailerObj = this.trailers.find(t => t.id === trailerId);
 
-      // 2. Busca datas ocupadas no backend
+      // Verifica datas ocupadas no backend (se implementado)
+      // @ts-ignore
       if (this.trailerService['getBusyDates']) {
          // @ts-ignore
          this.trailerService.getBusyDates(trailerId).subscribe(ranges => {
@@ -163,7 +189,6 @@ export class RentalsComponent implements OnInit {
     if (formVal.customerId) {
       this.selectedCustomerObj = this.customers.find(c => c.id === formVal.customerId);
     }
-    // Trailer já é atualizado no onTrailerSelect, mas garantimos aqui
     if (formVal.trailerId && !this.selectedTrailerObj) {
       this.selectedTrailerObj = this.trailers.find(t => t.id === formVal.trailerId);
     }
@@ -194,44 +219,44 @@ export class RentalsComponent implements OnInit {
         totalValue: this.totalCalculado
       };
 
-
       if (this.isEditMode && this.editingId) {
-        // UPDATE
         this.rentalService.updateRental(this.editingId, payload).subscribe({
           next: () => {
             this.displayModal = false;
             this.loadData();
-            alert('Locação atualizada!');
+            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Locação atualizada!' });
           },
-          error: () => alert('Erro ao atualizar.')
+          error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao atualizar.' })
         });
       } else {
-       
-      this.rentalService.createRental(payload).subscribe({
-        next: () => {
-          this.displayModal = false;
-          this.loadData();
-          alert('Locação realizada com sucesso!');
-        },
-        error: (err) => alert('Erro: ' + (err.error?.error || 'Erro desconhecido'))
-      });
+        this.rentalService.createRental(payload).subscribe({
+          next: () => {
+            this.displayModal = false;
+            this.loadData();
+            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Locação realizada!' });
+          },
+          error: (err) => this.messageService.add({ severity: 'error', summary: 'Erro', detail: err.error?.error || 'Erro desconhecido' })
+        });
       }
     }    
   }
 
-  // --- DOCUMENTOS ---
+  // --- DOCUMENTOS (CONTRATO) ---
   onContractSelected(event: any, rental: any) {
     const file = event.target.files[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        alert('Arquivo muito grande. Máximo 10MB.');
+        this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Arquivo muito grande. Máximo 10MB.' });
         return;
       }
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.rentalService.uploadContract(rental.id, e.target.result).subscribe({
-          next: () => { this.loadData(); alert('Contrato anexado!'); },
-          error: () => alert('Erro ao salvar.')
+          next: () => { 
+            this.loadData(); 
+            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Contrato anexado!' }); 
+          },
+          error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar.' })
         });
       };
       reader.readAsDataURL(file);
@@ -243,29 +268,89 @@ export class RentalsComponent implements OnInit {
       this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rental.contractUrl);
       this.displayContractModal = true;
     } else {
-      alert('Nenhum contrato anexado.');
+      this.messageService.add({ severity: 'info', summary: 'Info', detail: 'Nenhum contrato anexado.' });
     }
   }
 
-  // --- AÇÕES ---
-  openReturnDialog(rental: any) {
-    this.selectedRentalId = rental.id;
-    this.extraCostsInput = 0;
+  // =========================================================
+  // FLUXO DE DEVOLUÇÃO (FINALIZAÇÃO)
+  // =========================================================
+  
+  openReturnModal(rental: any) {
+    this.selectedRental = rental;
     this.displayReturnModal = true;
+    this.returnFile = null; // Reseta o arquivo
+    
+    // Reseta o formulário
+    this.returnForm.reset({
+      returnDate: new Date(),
+      returnTime: new Date(),
+      hasDamage: false,
+      damageDescription: '',
+      damageCost: 0,
+      lateFee: 0,
+      cleaningFee: 0
+    });
   }
 
-  onConfirmReturn() {
-    if (this.selectedRentalId) {
-      this.rentalService.returnRental(this.selectedRentalId, this.extraCostsInput).subscribe({
-        next: () => {
-          this.displayReturnModal = false;
-          this.loadData();
-          alert('Devolvido com sucesso!');
-        },
-        error: () => alert('Erro ao devolver.')
-      });
+  // PASSO 1: Apenas Baixar o PDF
+  generateReturnOnly() {
+    if (!this.selectedRental) return;
+    
+    this.pdfService.generateReturnTerm(
+      this.selectedRental, 
+      this.returnForm.value
+    );
+    
+    this.messageService.add({ severity: 'info', summary: 'Download', detail: 'Imprima, assine e anexe.' });
+  }
+
+  // PASSO 2: Selecionar o Arquivo Assinado
+  onReturnFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.returnFile = file;
     }
   }
+
+// --- ALTERAÇÃO 2: Upload na Finalização ---
+  finalCheckAndFinish() {
+    if (!this.selectedRental || !this.returnFile) return;
+
+    this.messageService.add({ severity: 'info', summary: 'Aguarde', detail: 'Salvando termo e finalizando...' });
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const base64File = e.target.result;
+
+      // AQUI MUDOU: Chama uploadReturnTerm em vez de uploadContract
+      this.rentalService.uploadReturnTerm(this.selectedRental.id, base64File).subscribe({
+        next: () => {
+          this.finishRentalOnBackend(); // Segue para fechar a locação
+        },
+        error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha no upload do termo.' })
+      });
+    };
+    reader.readAsDataURL(this.returnFile);
+  }
+  // PASSO 4: Mudar Status no Banco
+  finishRentalOnBackend() {
+    const payload = {
+      endDate: this.returnForm.value.returnDate,
+      totalValue: 0 // Valor base, ou lógica de soma se quiser
+    };
+
+    this.rentalService.finishRental(this.selectedRental.id, payload).subscribe({
+      next: () => {
+         this.loadData(); // <--- CORREÇÃO: loadData() em vez de loadRentals()
+         this.displayReturnModal = false;
+         this.messageService.add({ severity: 'success', summary: 'Concluído', detail: 'Locação finalizada com sucesso!' });
+      },
+      error: () => this.messageService.add({severity:'error', summary:'Erro', detail:'Falha ao finalizar no sistema'})
+    });
+  }
+
+  // --- OUTRAS FUNÇÕES ---
 
   openCostDialog(rental: any) {
     this.editingRental = rental;
@@ -279,9 +364,9 @@ export class RentalsComponent implements OnInit {
         next: () => {
           this.displayCostModal = false;
           this.loadData();
-          alert('Custos atualizados!');
+          this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Custos atualizados!' });
         },
-        error: () => alert('Erro ao atualizar custos.')
+        error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao atualizar custos.' })
       });
     }
   }
@@ -317,12 +402,10 @@ export class RentalsComponent implements OnInit {
     return 'OK';
   }
 
-
-  // === EXCLUIR ===
   confirmDelete(event: Event, rental: any) {
     this.confirmationService.confirm({
       target: event.target as EventTarget,
-      message: 'Tem certeza que deseja excluir esta locação? A carretinha será liberada.',
+      message: 'Tem certeza que deseja excluir esta locação?',
       header: 'Confirmar Exclusão',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sim, Excluir',
@@ -333,38 +416,89 @@ export class RentalsComponent implements OnInit {
         this.rentalService.deleteRental(rental.id).subscribe({
           next: () => {
             this.loadData();
-            alert('Locação excluída!');
+            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Locação excluída!' });
           },
-          error: () => alert('Erro ao excluir.')
+          error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao excluir.' })
         });
       }
     });
   }
 
-  // === EDITAR ===
   editRental(rental: any) {
     this.isEditMode = true;
     this.editingId = rental.id;
     this.displayModal = true;
 
-    // Preenche o formulário
     this.rentalForm.patchValue({
       customerId: rental.customerId,
-      // Nota: Trailer pode estar travado se a lógica de data limpar, 
-      // então setamos a data primeiro
       dates: [new Date(rental.startDate), new Date(rental.expectedEndDate)],
       dailyRate: rental.dailyRate,
       signalValue: rental.signalValue,
       trailerId: rental.trailerId 
     });
     
-    // Força o cálculo inicial e destrava o trailer
     this.rentalForm.get('trailerId')?.enable();
     this.calculateTotal();
     
-    // Pequeno delay para garantir que o dropdown de trailers carregue o valor
     setTimeout(() => {
         this.rentalForm.patchValue({ trailerId: rental.trailerId });
     }, 100);
+  }
+
+  // --- ALTERAÇÃO 1: Função Genérica para Visualizar Documentos ---
+ viewDocument(base64Data: string | null) {
+    if (base64Data) {
+      try {
+        // 1. Verifica se é um Base64 puro (data:application/pdf...)
+        if (base64Data.startsWith('data:')) {
+          // Converte para BLOB (Arquivo na memória)
+          const blob = this.base64ToBlob(base64Data);
+          
+          // Cria uma URL temporária (blob:http://localhost...)
+          this.currentBlobUrl = URL.createObjectURL(blob);
+          
+          // Sanitiza para o Angular aceitar
+          this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.currentBlobUrl);
+        
+        } else {
+          // Caso seja uma URL normal (ex: https://s3...)
+          this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(base64Data);
+        }
+
+        this.displayContractModal = true;
+
+      } catch (e) {
+        console.error('Erro ao processar PDF:', e);
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Arquivo corrompido ou inválido.' });
+      }
+    } else {
+      this.messageService.add({ severity: 'info', summary: 'Info', detail: 'Documento não disponível.' });
+    }
+  }
+
+  // Função Mágica: Converte a string gigante em um arquivo Blob leve
+  base64ToBlob(base64: string) {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    
+    return new Blob([u8arr], { type: mime });
+  }
+
+  // Limpeza de memória quando fechar o modal
+  onCloseContractModal() {
+    this.displayContractModal = false;
+    this.sanitizedContractUrl = null;
+    
+    if (this.currentBlobUrl) {
+      URL.revokeObjectURL(this.currentBlobUrl); // Libera memória do navegador
+      this.currentBlobUrl = null;
+    }
   }
 }

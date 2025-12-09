@@ -1,0 +1,91 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="page-container">
+  
+  <div class="header-action">
+    <div>
+      <h1>Gerenciar Equipe</h1>
+      <p class="subtitle">Controle de acessos e permissões do sistema.</p>
+    </div>
+    <button pButton label="Novo Usuário" icon="pi pi-user-plus" class="p-button-success" (click)="showDialog()"></button>
+  </div>
+
+  <div class="card-table">
+    <p-table [value]="users" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" responsiveLayout="scroll">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nome</th>
+          <th>E-mail (Login)</th>
+          <th>Cargo / Permissão</th>
+          <th class="text-center">Ações</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td class="font-bold text-white">{{ user.name }}</td>
+          <td class="text-gray-400">{{ user.email }}</td>
+          <td>
+            <span [class]="'badge ' + (user.role === 'ADMIN' ? 'admin-badge' : 'operador-badge')">
+              {{ user.role }}
+            </span>
+          </td>
+          <td class="text-center">
+            
+            <button pButton icon="pi pi-pencil" 
+                    class="p-button-rounded p-button-text p-button-info mr-2" 
+                    pTooltip="Editar Usuário"
+                    (click)="editUser(user)">
+            </button>
+
+            <button pButton icon="pi pi-trash" 
+                    class="p-button-rounded p-button-text p-button-danger" 
+                    pTooltip="Remover Acesso"
+                    (click)="deleteUser(user)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+  <p-dialog [header]="isEditMode ? 'Editar Usuário' : 'Novo Usuário'" 
+            [(visible)]="displayModal" 
+            [modal]="true" 
+            [style]="{width: '450px'}" 
+            [draggable]="false">
+            
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-3 pt-3">
+      
+      <div class="field">
+        <label>Nome Completo</label>
+        <input pInputText formControlName="name" class="w-full" placeholder="Ex: João Silva">
+      </div>
+
+      <div class="field">
+        <label>E-mail de Acesso</label>
+        <input pInputText formControlName="email" class="w-full" placeholder="joao@empresa.com">
+      </div>
+
+      <div class="field">
+        <label>Cargo</label>
+        <p-dropdown [options]="roles" formControlName="role" styleClass="w-full" appendTo="body"></p-dropdown>
+      </div>
+
+      <div class="field">
+        <label>Senha {{ isEditMode ? '(Deixe vazio para manter a atual)' : '' }}</label>
+        <p-password formControlName="password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" placeholder="******" [feedback]="false"></p-password>
+      </div>
+
+      <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 border-gray-800">
+        <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
+        <button pButton [label]="isEditMode ? 'Salvar Alterações' : 'Criar Acesso'" type="submit" [disabled]="!userForm.valid"></button>
+      </div>
+
+    </form>
+  </p-dialog>
+
+</div>

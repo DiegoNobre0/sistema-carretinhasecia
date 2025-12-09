@@ -1,0 +1,22 @@
+/* Reutilize styles do customers.scss ou coloque no styles.scss global */
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  &.admin-badge {
+    background: rgba(139, 92, 246, 0.15); /* Roxo */
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+  }
+
+  &.operador-badge {
+    background: rgba(59, 130, 246, 0.15); /* Azul */
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+}
