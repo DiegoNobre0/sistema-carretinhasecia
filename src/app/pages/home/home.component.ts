@@ -59,7 +59,8 @@ export class HomeComponent implements OnInit {
   constructor(private dashboardService: DashboardService,private authService: AuthService) {}
 
   ngOnInit() {
-    this.isAdmin = this.authService.isAdmin();
+   
+    this.isAdmin = this.authService.isAdmin();    
     this.generateYears(); // <--- Gera os anos dinamicamente
     this.loadDashboard();
     this.initChartConfig();

@@ -5,7 +5,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; // <-
 
 import { CustomerService } from '../../services/customer.service';
 import { ImageCompressService } from '../../services/image-compress.service'; // Se estiver usando
-
+import { PdfCompressService } from '../../services/pdf-compress.service';
 // PrimeNG imports
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -60,8 +60,10 @@ export class CustomersComponent implements OnInit {
     private customerService: CustomerService,
     private fb: FormBuilder,
     private messageService: MessageService,
+    private imageCompressService: ImageCompressService,
+    private pdfCompressService: PdfCompressService,
     private sanitizer: DomSanitizer // <--- Injete aqui
-    // private imageService: ImageCompressService (se tiver usando)
+    // private imageService: ImageCompressServ,ice (se tiver usando)
   ) {
     this.customerForm = this.fb.group({
       name: ['', Validators.required],
@@ -164,20 +166,71 @@ showDialog() {
       }
     }
   }
-
-  // --- ARQUIVOS E FOTOS ---
-  onFileSelected(event: any, fieldName: string) {
+async onFileSelected(event: any, fieldName: string) {
     const file = event.target.files[0];
+    
     if (file) {
+      this.messageService.add({ severity: 'info', summary: 'Processando', detail: 'Otimizando arquivo...' });
+
+      try {
+        let finalResult: any;
+
+        // CASO 1: É PDF? (Usa o serviço de PDF)
+        if (file.type === 'application/pdf') {
+          console.log('Comprimindo PDF...');
+          const compressedPdfFile = await this.pdfCompressService.compressPdf(file);
+          
+          // Precisamos converter o arquivo PDF comprimido para Base64 para salvar
+          finalResult = await this.fileToBase64(compressedPdfFile);
+        } 
+        
+        // CASO 2: É IMAGEM? (Usa o serviço de Imagem)
+        else if (file.type.startsWith('image/')) {
+           console.log('Comprimindo Imagem...');
+           // O serviço já devolve a string Base64 pronta
+           finalResult = await this.imageCompressService.compressImage(file);
+        }
+
+        // SALVA NO FORMULÁRIO
+        if (finalResult) {
+          this.customerForm.patchValue({ [fieldName]: finalResult });
+          
+          // Atualiza nome visual
+          if (fieldName === 'cnhUrl') this.fileNameCNH = file.name;
+          if (fieldName === 'proofUrl') this.fileNameProof = file.name;
+
+          this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Arquivo pronto.' });
+        }
+
+      } catch (err) {
+        console.error(err);
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao processar arquivo.' });
+      }
+    }
+  }
+  // Helper simples para converter File -> Base64 (usado para o PDF)
+  fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  // Helper para converter em Base64 e salvar no formulário
+  convertAndAttach(file: File, fieldName: string) {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.customerForm.patchValue({ [fieldName]: e.target.result });
+      
+      // Atualiza o nome do arquivo na tela
       if (fieldName === 'cnhUrl') this.fileNameCNH = file.name;
       if (fieldName === 'proofUrl') this.fileNameProof = file.name;
 
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.customerForm.patchValue({ [fieldName]: e.target.result });
-      };
-      reader.readAsDataURL(file);
-    }
+      this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Arquivo anexado!' });
+    };
+    reader.readAsDataURL(file);
   }
 
   // --- ABAS ---
@@ -216,6 +269,15 @@ showDialog() {
       this.displayContractModal = true;
     } else {
       this.messageService.add({ severity: 'info', summary: 'Info', detail: 'Nenhum contrato assinado para esta locação.' });
+    }
+  }
+
+  viewDocumentUrl(url: string) {
+    if (url) {
+      // Sanitiza a URL para o navegador confiar nela
+      this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      // Abre o mesmo modal que usamos para contratos
+      this.displayContractModal = true;
     }
   }
 }

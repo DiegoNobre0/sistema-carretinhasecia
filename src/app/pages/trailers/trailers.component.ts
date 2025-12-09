@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { TrailerService } from '../../services/trailer.service';
-import { ImageCompressService } from '../../services/image-compress.service';
+import { ImageCompressService } from '../../services/image-compress.service'; // <--- IMPORTE O SERVIÇO
 
 // PrimeNG
 import { ButtonModule } from 'primeng/button';
@@ -31,8 +31,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 })
 export class TrailersComponent implements OnInit {
   
-  allTrailers: any[] = []; // Lista completa
-  filteredTrailers: any[] = []; // Lista filtrada pela busca
+  allTrailers: any[] = [];
+  filteredTrailers: any[] = [];
   searchTerm: string = '';
 
   displayModal = false;
@@ -42,7 +42,7 @@ export class TrailersComponent implements OnInit {
 
   constructor(
     private trailerService: TrailerService,
-    private imageService: ImageCompressService,
+    private imageService: ImageCompressService, // <--- INJETE AQUI
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
     private messageService: MessageService
@@ -62,11 +62,10 @@ export class TrailersComponent implements OnInit {
   loadTrailers() {
     this.trailerService.getTrailers().subscribe(data => {
       this.allTrailers = data;
-      this.filterList(); // Aplica o filtro se houver
+      this.filterList();
     });
   }
 
-  // --- FILTRO DE BUSCA ---
   filterList() {
     if (!this.searchTerm) {
       this.filteredTrailers = this.allTrailers;
@@ -79,7 +78,6 @@ export class TrailersComponent implements OnInit {
     }
   }
 
-  // --- MODAL (CRIAR / EDITAR) ---
   showDialog() {
     this.displayModal = true;
     this.isEditMode = false;
@@ -100,7 +98,6 @@ export class TrailersComponent implements OnInit {
     });
   }
 
-  // --- EXCLUIR ---
   deleteTrailer(event: Event, trailer: any) {
     this.confirmationService.confirm({
       target: event.target as EventTarget,
@@ -122,13 +119,11 @@ export class TrailersComponent implements OnInit {
     });
   }
 
-  // --- SALVAR ---
   onSubmit() {
     if (this.trailerForm.valid) {
       const val = this.trailerForm.value;
 
       if (this.isEditMode && this.editingId) {
-        // UPDATE
         this.trailerService.updateTrailer(this.editingId, val).subscribe({
           next: () => {
             this.displayModal = false;
@@ -138,7 +133,6 @@ export class TrailersComponent implements OnInit {
           error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao atualizar.' })
         });
       } else {
-        // CREATE
         this.trailerService.createTrailer(val).subscribe({
           next: () => {
             this.displayModal = false;
@@ -151,22 +145,32 @@ export class TrailersComponent implements OnInit {
     }
   }
 
-  // --- FOTO ---
-  onFileSelected(event: any) {
+  // --- ATUALIZAÇÃO DA FOTO COM COMPRESSÃO ---
+  async onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
-      this.imageService.compressFile(file).then(result => {
-        this.trailerForm.patchValue({ photoUrl: result });
-      });
+      this.messageService.add({ severity: 'info', summary: 'Aguarde', detail: 'Comprimindo foto...' });
+      
+      try {
+        // Chama o serviço para comprimir a imagem
+        const compressedBase64 = await this.imageService.compressImage(file);
+        
+        // Salva a versão leve no formulário
+        this.trailerForm.patchValue({ photoUrl: compressedBase64 });
+        
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Foto carregada!' });
+      } catch (error) {
+        console.error(error);
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao processar imagem.' });
+      }
     }
   }
 
-  // Helper de Status
   getStatusSeverity(status: string): string {
     switch (status) {
-      case 'AVAILABLE': return 'success'; // Verde
-      case 'RENTED': return 'warning';    // Amarelo/Laranja
-      case 'MAINTENANCE': return 'danger'; // Vermelho
+      case 'AVAILABLE': return 'success';
+      case 'RENTED': return 'warning';
+      case 'MAINTENANCE': return 'danger';
       default: return 'info';
     }
   }

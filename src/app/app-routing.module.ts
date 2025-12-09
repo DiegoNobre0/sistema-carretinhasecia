@@ -12,6 +12,7 @@ import { SenatranComponent } from './pages/senatran/senatran.component';
 import { BackupComponent } from './pages/backup/backup.component';
 import { FinancialComponent } from './pages/financial/financial.component';
 import { AgendaComponent } from './pages/agenda/agenda.component';
+import { adminGuard } from './core/guards/admin.guard';
 
 const routes: Routes = [
   // Rota Pública (Login)
@@ -24,6 +25,11 @@ const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { 
+        path: 'home', 
+        component: HomeComponent,
+        canActivate: [adminGuard] 
+      },
       { path: 'home', component: HomeComponent }, 
       { path: 'carretinhas', component: TrailersComponent },
       { path: 'clientes', component: CustomersComponent },

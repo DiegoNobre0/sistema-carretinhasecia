@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="page-container">
   
   <div class="header-action">
@@ -5,7 +6,7 @@
       <h1>Gestão de Clientes</h1>
       <p class="subtitle">Cadastre e gerencie seus locatários.</p>
     </div>
-    <button pButton label="+ Novo Cliente" icon="pi pi-user-plus" (click)="showDialog()"></button>
+    <button pButton label="+ Novo Cliente" icon="pi pi-user-plus" class="p-button-primary" (click)="showDialog()"></button>
   </div>
 
   <div class="card-table">
@@ -14,9 +15,13 @@
       [value]="customers" 
       [paginator]="true" 
       [rows]="10"
-      [globalFilterFields]="['name', 'document', 'phone']"> <ng-template pTemplate="caption">
+      [globalFilterFields]="['name', 'document', 'phone']"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll">
+      
+      <ng-template pTemplate="caption">
         <div class="flex align-items-center justify-content-between">
-          <span class="p-input-icon-left w-full max-w-20rem">
+          <span class="p-input-icon-left w-full sm:max-w-20rem">
             <i class="pi pi-search"></i>
             <input 
               pInputText 
@@ -43,7 +48,11 @@
           <td style="font-weight: bold; color: #fff;">{{ cust.name }}</td>
           <td>{{ cust.document }}</td>
           <td>{{ cust.phone }}</td>
-          <td><span [class]="'badge ' + cust.type">{{ cust.type }}</span></td>
+          <td>
+            <span [class]="'badge ' + cust.type">
+              {{ cust.type === 'PF' ? 'FÍSICA' : 'JURÍDICA' }}
+            </span>
+          </td>
           <td class="text-center flex gap-2 justify-content-center">
             
             <button pButton icon="pi pi-pencil" pTooltip="Editar" 
@@ -67,7 +76,7 @@
     </p-table>
   </div>
 
-  <p-dialog header="Cliente" [(visible)]="displayModal" [modal]="true" [style]="{width: '700px'}" styleClass="custom-dialog">
+  <p-dialog header="Cliente" [(visible)]="displayModal" [modal]="true" [style]="{width: '750px'}" styleClass="custom-dialog">
      <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
        
        <p-tabView (onChange)="onTabChange($event)">
@@ -97,30 +106,52 @@
               </div>
 
               <div class="field">
-                <label>Endereço Completo</label>
-                <input pInputText formControlName="street" class="w-full" placeholder="Rua, Número, Bairro...">
+                <label>CEP</label>
+                <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem" placeholder="00000-000"></p-inputMask>
               </div>
 
-              <div class="form-row flex gap-3 mt-2">
+              <div class="form-row flex gap-3">
+                <div class="field" style="flex: 3;">
+                  <label>Logradouro (Rua, Av...)</label>
+                  <input pInputText formControlName="street" class="w-full">
+                </div>
+                <div class="field" style="flex: 1;">
+                  <label>Número</label>
+                  <input pInputText formControlName="number" class="w-full">
+                </div>
+              </div>
+
+              <div class="form-row flex gap-3">
+                <div class="field flex-1">
+                  <label>Bairro</label>
+                  <input pInputText formControlName="district" class="w-full">
+                </div>
+                <div class="field flex-1">
+                  <label>Cidade</label>
+                  <input pInputText formControlName="city" class="w-full">
+                </div>
+              </div>
+
+              <div class="form-row flex gap-3 mt-3 border-top-1 border-gray-800 pt-3">
                 
                 <div class="field flex-1">
                    <label>Foto CNH</label>
-                   <div class="file-upload-box">
-                     <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*" id="fileCNH" hidden>
-                     <label for="fileCNH" class="upload-btn w-full justify-content-center">
+                   <div class="file-upload-box mt-1">
+                     <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*,application/pdf" id="fileCNH" hidden>
+                     <label for="fileCNH" class="upload-btn w-full justify-content-center cursor-pointer p-2 border-1 border-gray-600 border-round hover:surface-hover transition-colors flex align-items-center gap-2 text-white bg-gray-900">
                        <i class="pi pi-camera"></i>
-                       <span class="text-sm ml-2">{{ fileNameCNH || 'Escolher Foto' }}</span>
+                       <span class="text-sm">{{ fileNameCNH || 'Escolher Arquivo' }}</span>
                      </label>
                    </div>
                 </div>
 
                 <div class="field flex-1">
-                   <label>Comprovante Residência</label>
-                   <div class="file-upload-box">
-                     <input type="file" (change)="onFileSelected($event, 'proofUrl')" accept="image/*" id="fileProof" hidden>
-                     <label for="fileProof" class="upload-btn w-full justify-content-center">
+                   <label>Comp. Residência</label>
+                   <div class="file-upload-box mt-1">
+                     <input type="file" (change)="onFileSelected($event, 'proofUrl')" accept="image/*,application/pdf" id="fileProof" hidden>
+                     <label for="fileProof" class="upload-btn w-full justify-content-center cursor-pointer p-2 border-1 border-gray-600 border-round hover:surface-hover transition-colors flex align-items-center gap-2 text-white bg-gray-900">
                        <i class="pi pi-file"></i>
-                       <span class="text-sm ml-2">{{ fileNameProof || 'Escolher Foto' }}</span>
+                       <span class="text-sm">{{ fileNameProof || 'Escolher Arquivo' }}</span>
                      </label>
                    </div>
                 </div>
@@ -149,22 +180,44 @@
               </div>
 
               <div class="field">
-                <label>E-mail</label>
+                <label>E-mail Corporativo</label>
                 <input pInputText formControlName="email" class="w-full">
               </div>
 
               <div class="field">
-                <label>Endereço da Empresa</label>
-                <input pInputText formControlName="street" class="w-full">
+                <label>CEP</label>
+                <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem"></p-inputMask>
               </div>
 
-              <div class="field">
+              <div class="form-row flex gap-3">
+                <div class="field" style="flex: 3;">
+                  <label>Logradouro</label>
+                  <input pInputText formControlName="street" class="w-full">
+                </div>
+                <div class="field" style="flex: 1;">
+                  <label>Número</label>
+                  <input pInputText formControlName="number" class="w-full">
+                </div>
+              </div>
+
+              <div class="form-row flex gap-3">
+                <div class="field flex-1">
+                  <label>Bairro</label>
+                  <input pInputText formControlName="district" class="w-full">
+                </div>
+                <div class="field flex-1">
+                  <label>Cidade</label>
+                  <input pInputText formControlName="city" class="w-full">
+                </div>
+              </div>
+
+              <div class="field mt-3 border-top-1 border-gray-800 pt-3">
                  <label>Contrato Social / Docs</label>
-                 <div class="file-upload-box">
-                   <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*" id="fileDocPJ" hidden>
-                   <label for="fileDocPJ" class="upload-btn w-full justify-content-center">
+                 <div class="file-upload-box mt-1">
+                   <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*,application/pdf" id="fileDocPJ" hidden>
+                   <label for="fileDocPJ" class="upload-btn w-full justify-content-center cursor-pointer p-2 border-1 border-gray-600 border-round hover:surface-hover transition-colors flex align-items-center gap-2 text-white bg-gray-900">
                      <i class="pi pi-folder-open"></i>
-                     <span class="text-sm ml-2">{{ fileNameCNH || 'Anexar Documento' }}</span>
+                     <span class="text-sm">{{ fileNameCNH || 'Anexar Documento' }}</span>
                    </label>
                  </div>
               </div>
@@ -183,56 +236,114 @@
   </p-dialog>
 
   <p-dialog header="Documentos" [(visible)]="displayDocsModal" [modal]="true" [style]="{width: '800px'}" [maximizable]="true">
-    <div class="docs-container" *ngIf="selectedCustomerDocs">
-      <div class="doc-card">
-        <div class="doc-header"><i class="pi pi-id-card"></i><span>CNH</span></div>
-        <div class="doc-content"><img *ngIf="selectedCustomerDocs.cnhUrl" [src]="selectedCustomerDocs.cnhUrl"></div>
+    <div class="docs-container flex gap-3 justify-content-center flex-wrap" *ngIf="selectedCustomerDocs">
+      
+      <div class="doc-card border-1 border-gray-700 border-round p-3 surface-card text-center" style="flex: 1; min-width: 300px;">
+        <div class="doc-header mb-2 font-bold text-lg"><i class="pi pi-id-card mr-2"></i><span>CNH / Doc</span></div>
+        <div class="doc-content h-20rem flex align-items-center justify-content-center bg-gray-900 border-round overflow-hidden relative">
+            
+            <div *ngIf="selectedCustomerDocs.cnhUrl && selectedCustomerDocs.cnhUrl.includes('application/pdf')" class="w-full h-full flex flex-column align-items-center justify-content-center gap-3">
+               <i class="pi pi-file-pdf text-red-500 text-5xl"></i>
+               <button pButton label="Abrir PDF" icon="pi pi-eye" 
+                       class="p-button-outlined p-button-secondary" 
+                       (click)="viewDocumentUrl(selectedCustomerDocs.cnhUrl)">
+               </button>
+            </div>
+
+            <img *ngIf="selectedCustomerDocs.cnhUrl && !selectedCustomerDocs.cnhUrl.includes('application/pdf')" 
+                 [src]="selectedCustomerDocs.cnhUrl" 
+                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: pointer;"
+                 (click)="viewDocumentUrl(selectedCustomerDocs.cnhUrl)"> <span *ngIf="!selectedCustomerDocs.cnhUrl" class="text-gray-500">Sem arquivo</span>
+        </div>
       </div>
-      <div class="doc-card">
-        <div class="doc-header"><i class="pi pi-home"></i><span>Comprovante</span></div>
-        <div class="doc-content"><img *ngIf="selectedCustomerDocs.proofUrl" [src]="selectedCustomerDocs.proofUrl"></div>
+
+      <div class="doc-card border-1 border-gray-700 border-round p-3 surface-card text-center" style="flex: 1; min-width: 300px;">
+        <div class="doc-header mb-2 font-bold text-lg"><i class="pi pi-home mr-2"></i><span>Comprovante</span></div>
+        <div class="doc-content h-20rem flex align-items-center justify-content-center bg-gray-900 border-round overflow-hidden relative">
+            
+            <div *ngIf="selectedCustomerDocs.proofUrl && selectedCustomerDocs.proofUrl.includes('application/pdf')" class="w-full h-full flex flex-column align-items-center justify-content-center gap-3">
+               <i class="pi pi-file-pdf text-red-500 text-5xl"></i>
+               <button pButton label="Abrir PDF" icon="pi pi-eye" 
+                       class="p-button-outlined p-button-secondary" 
+                       (click)="viewDocumentUrl(selectedCustomerDocs.proofUrl)">
+               </button>
+            </div>
+
+            <img *ngIf="selectedCustomerDocs.proofUrl && !selectedCustomerDocs.proofUrl.includes('application/pdf')" 
+                 [src]="selectedCustomerDocs.proofUrl" 
+                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: pointer;"
+                 (click)="viewDocumentUrl(selectedCustomerDocs.proofUrl)">
+            
+            <span *ngIf="!selectedCustomerDocs.proofUrl" class="text-gray-500">Sem arquivo</span>
+        </div>
       </div>
+
     </div>
   </p-dialog>
-
-  <p-dialog header="Histórico e Performance" [(visible)]="displayHistory" [modal]="true" [style]="{width: '800px'}">
+  <p-dialog header="Histórico e Performance" [(visible)]="displayHistory" [modal]="true" [style]="{width: '850px'}" [draggable]="false" [resizable]="false">
     <div *ngIf="historyData" class="history-content">
       
-      <div class="stats-grid">
-        <div class="stat-card"><div class="icon-box green"><i class="pi pi-wallet"></i></div><div class="info"><span class="label">Total Investido</span><span class="value text-green">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</span></div></div>
-        <div class="stat-card"><div class="icon-box blue"><i class="pi pi-shopping-bag"></i></div><div class="info"><span class="label">Locações</span><span class="value">{{ historyData.stats.totalRentals }}</span></div></div>
+    <div class="stats-grid grid mb-4">
+        
+        <div class="col-6">
+            <div class="stat-card theme-green">
+                <div class="icon-wrapper">
+                    <i class="pi pi-wallet"></i>
+                </div>
+                <div class="content">
+                    <span class="label">Total Investido</span>
+                    <span class="value">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <div class="stat-card theme-blue">
+                <div class="icon-wrapper">
+                    <i class="pi pi-shopping-bag"></i>
+                </div>
+                <div class="content">
+                    <span class="label">Locações Realizadas</span>
+                    <span class="value">{{ historyData.stats.totalRentals }}</span>
+                </div>
+            </div>
+        </div>
+
       </div>
 
       <div class="mt-4">
-        <h4 class="section-title">Detalhamento</h4>
-        <p-table [value]="historyData.history" [rows]="5" [paginator]="true" styleClass="p-datatable-sm">
+        <h4 class="section-title">Detalhamento de Contratos</h4>
+        
+        <p-table [value]="historyData.history" [rows]="5" [paginator]="true" styleClass="p-datatable-sm" responsiveLayout="scroll">
           <ng-template pTemplate="header">
             <tr>
               <th>Status</th>
-              <th>Data</th>
+              <th>Data Retirada</th>
               <th>Carretinha</th>
-              <th>Valor</th>
-              <th class="text-center">Contrato</th> </tr>
+              <th>Valor Total</th>
+              <th class="text-center">Contrato</th> 
+            </tr>
           </ng-template>
+          
           <ng-template pTemplate="body" let-h>
             <tr>
               <td>
-                <span class="status-tag" [ngClass]="h.status === 'OPEN' ? 'open' : 'closed'">
-                  {{ h.status === 'OPEN' ? 'ABERTO' : 'FECHADO' }}
+                <span [class]="'px-2 py-1 text-xs border-round font-bold ' + (h.status === 'OPEN' ? 'bg-blue-900 text-blue-300 border-1 border-blue-700' : 'bg-green-900 text-green-300 border-1 border-green-700')">
+                  {{ h.status === 'OPEN' ? 'EM ABERTO' : 'FINALIZADO' }}
                 </span>
               </td>
-              <td>{{ h.startDate | date:'dd/MM/yy' }}</td>
-              <td>{{ h.trailer?.plate }}</td>
-              <td class="font-bold text-green">R$ {{ h.totalValue | number:'1.2-2' }}</td>
+              <td class="font-medium">{{ h.startDate | date:'dd/MM/yy' }}</td>
+              <td class="text-gray-300">{{ h.trailer?.plate }}</td>
+              <td class="font-bold text-green-400">R$ {{ h.totalValue | number:'1.2-2' }}</td>
               
               <td class="text-center">
                 <button *ngIf="h.contractUrl" 
                         pButton icon="pi pi-file-pdf" 
-                        class="p-button-rounded p-button-text p-button-sm p-button-secondary" 
-                        pTooltip="Ver PDF Assinado"
+                        class="p-button-rounded p-button-text p-button-danger hover:bg-red-900" 
+                        pTooltip="Ver PDF"
                         (click)="viewContract(h)">
                 </button>
-                <span *ngIf="!h.contractUrl" class="text-gray-500 text-xs">-</span>
+                <span *ngIf="!h.contractUrl" class="text-gray-600 text-xs"><i class="pi pi-minus"></i></span>
               </td>
 
             </tr>

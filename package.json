@@ -19,6 +19,8 @@
     "@angular/platform-browser-dynamic": "^16.1.0",
     "@angular/router": "^16.1.0",
     "chart.js": "^4.5.1",
+    "jspdf": "^3.0.4",
+    "pdfjs-dist": "^2.16.105",
     "pdfmake": "^0.2.20",
     "primeflex": "^4.0.0",
     "primeicons": "7.0.0",

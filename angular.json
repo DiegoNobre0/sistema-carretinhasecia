@@ -22,7 +22,9 @@
             "main": "src/main.ts",
             "allowedCommonJsDependencies": [
               "chart.js",
-              "pdfmake"
+              "pdfmake",
+              "pdfjs-dist",
+              "jspdf"
             ],
             "polyfills": [
               "zone.js"

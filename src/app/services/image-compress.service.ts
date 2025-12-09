@@ -12,7 +12,7 @@ export class ImageCompressService {
 
   constructor() { }
 
-  compressFile(file: File): Promise<string> {
+  compressImage(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       

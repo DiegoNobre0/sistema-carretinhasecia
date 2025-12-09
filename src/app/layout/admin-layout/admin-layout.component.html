@@ -9,7 +9,7 @@
     </div>
 
     <nav class="menu">
-      <a routerLink="/dashboard/home" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+      <a *ngIf="isAdmin" routerLink="/dashboard/home" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
         <i class="pi pi-home"></i>
         <span>Início</span>
       </a>
@@ -43,17 +43,17 @@
 
       <div class="menu-category" *ngIf="isAdmin" >GESTÃO</div>
 
-      <a routerLink="/dashboard/financeiro" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+      <a routerLink="/dashboard/financeiro" routerLinkActive="active" (click)="closeMenu()" class="menu-item" *ngIf="isAdmin">
         <i class="pi pi-dollar"></i>
         <span>Financeiro</span>
       </a>
 
-      <a routerLink="/dashboard/manutencao" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+      <a routerLink="/dashboard/manutencao" routerLinkActive="active" (click)="closeMenu()" class="menu-item" *ngIf="isAdmin">
         <i class="pi pi-cog"></i>
         <span>Manutenção</span>
       </a>
 
-      <a routerLink="/dashboard/backup" routerLinkActive="active" (click)="closeMenu()" class="menu-item">
+      <a routerLink="/dashboard/backup" routerLinkActive="active" (click)="closeMenu()" class="menu-item" *ngIf="isAdmin">
         <i class="pi pi-database"></i>
         <span>Backup</span>
       </a>
@@ -61,9 +61,13 @@
 
     <div class="user-profile">
       <div class="avatar"><i class="pi pi-user"></i></div>
-      <div class="info">
-        <span class="name">Admin</span>
+      <div class="info" *ngIf="isAdmin">
+        <span class="name" >Admin</span>
         <span class="role">Gerente</span>
+      </div>
+      <div class="info" *ngIf="!isAdmin">
+        <span class="name" >Funcionario</span>
+        
       </div>
       <button class="logout-btn" (click)="onLogout()" title="Sair do sistema">
         <i class="pi pi-sign-out"></i>
