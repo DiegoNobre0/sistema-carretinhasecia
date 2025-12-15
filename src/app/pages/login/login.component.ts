@@ -56,43 +56,39 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.valid) {
       this.loading = true;
       
-      const { email, password, remember } = this.loginForm.value;
-
-      this.authService.login({ email, password }).subscribe({
-        next: (res) => {
-          // --- LÓGICA DO LEMBRAR-ME ---
-          if (remember) {
-            localStorage.setItem('saved_email', email);
-          } else {
-            localStorage.removeItem('saved_email');
-          }
-
-          // --- SALVAR SESSÃO (Essencial para o AuthGuard) ---
-          // Salva o token que veio do backend
-          if (res.token) {
-            localStorage.setItem('token', res.token);
-            // Se o backend mandar os dados do usuário, salva também
-            localStorage.setItem('user', JSON.stringify(res));
-          }
-
-          this.messageService.add({ severity: 'success', summary: 'Bem-vindo', detail: 'Login realizado!' });
-          
-          // Redireciona
-          // Pequeno delay para mostrar o toast (opcional)
-          setTimeout(() => {
-             // Lógica anterior: Se for ADMIN vai pra home, se não vai pra locações (controlado pelo Guard ou aqui)
-             this.router.navigate(['/dashboard/home']); 
-          }, 500);
+      this.authService.login(this.loginForm.value).subscribe({
+        
+        // SUCESSO
+        next: (response) => {
+          this.loading = false;
+          // Salva token, redireciona, etc...
+          localStorage.setItem('token', response.token);
+          this.router.navigate(['/dashboard']); 
         },
+
+        // ERRO (AQUI ESTÁ A MÁGICA)
         error: (err) => {
           this.loading = false;
           console.error(err);
-          this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'E-mail ou senha inválidos' });
+
+          // Tenta pegar a mensagem que veio do backend (passo 1)
+          // Se não vier nada, usa uma mensagem padrão
+          const errorMessage = err.error?.message || 'Ocorreu um erro ao tentar entrar.';
+
+          this.messageService.add({ 
+            severity: 'error', 
+            summary: 'Erro de Acesso', 
+            detail: errorMessage,
+            life: 3000 // Fica na tela por 3 segundos
+          });
         }
       });
     } else {
-      // Caso o usuário clique sem preencher tudo
-      this.loginForm.markAllAsTouched();
+        this.messageService.add({ 
+            severity: 'warn', 
+            summary: 'Atenção', 
+            detail: 'Preencha todos os campos corretamente.' 
+        });
     }
   }
 }
