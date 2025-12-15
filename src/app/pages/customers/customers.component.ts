@@ -16,7 +16,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputMaskModule } from 'primeng/inputmask';
 import { TabViewModule } from 'primeng/tabview';
 import { CalendarModule } from 'primeng/calendar';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
@@ -30,7 +30,8 @@ import { TooltipModule } from 'primeng/tooltip';
     TabViewModule, CalendarModule, ToastModule, TooltipModule
   ],
   templateUrl: './customers.component.html',
-  styleUrls: ['./customers.component.scss']
+  styleUrls: ['./customers.component.scss'],
+  providers: [ConfirmationService, MessageService]
 })
 export class CustomersComponent implements OnInit {
 
@@ -66,6 +67,7 @@ export class CustomersComponent implements OnInit {
     private customerService: CustomerService,
     private fb: FormBuilder,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private imageCompressService: ImageCompressService,
     private pdfCompressService: PdfCompressService,
     private sanitizer: DomSanitizer
@@ -360,5 +362,31 @@ export class CustomersComponent implements OnInit {
       URL.revokeObjectURL(this.currentBlobUrl);
       this.currentBlobUrl = null;
     }
+  }
+
+  deleteCustomer(customer: any) {
+    this.confirmationService.confirm({
+        message: 'Tem certeza que deseja excluir ' + customer.name + '?',
+        header: 'Confirmar Exclusão',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Sim',
+        rejectLabel: 'Não',
+        acceptButtonStyleClass: 'p-button-danger p-button-text',
+        rejectButtonStyleClass: 'p-button-text',
+        accept: () => {
+            // Lógica real de exclusão (chamar sua API) vai aqui
+            // this.customerService.delete(customer.id)...
+            
+            this.messageService.add({
+                severity: 'success', 
+                summary: 'Sucesso', 
+                detail: 'Cliente excluído com sucesso', 
+                life: 3000
+            });
+        },
+        reject: () => {
+            // Opcional: Lógica se o usuário cancelar
+        }
+    });
   }
 }
