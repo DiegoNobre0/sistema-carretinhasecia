@@ -21,6 +21,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-customers',
@@ -68,6 +69,7 @@ export class CustomersComponent implements OnInit {
   constructor(
     private customerService: CustomerService,
     private fb: FormBuilder,
+    private http: HttpClient,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private imageCompressService: ImageCompressService,
@@ -407,4 +409,39 @@ export class CustomersComponent implements OnInit {
         }
     });
 }
+
+buscarCep() {
+    // 1. Pega o valor do CEP do formulário
+    let cep = this.customerForm.get('zipCode')?.value;
+
+    if (cep) {
+      // 2. Remove caracteres não numéricos (traço, ponto, underscore)
+      cep = cep.replace(/\D/g, '');
+
+      // 3. Verifica se tem 8 dígitos
+      if (cep.length === 8) {
+        
+        // 4. Chama a API do ViaCEP
+        this.http.get<any>(`https://viacep.com.br/ws/${cep}/json/`)
+          .subscribe(dados => {
+            
+            if (!dados.erro) {
+              // 5. Preenche o formulário automaticamente
+              this.customerForm.patchValue({
+                street: dados.logradouro,     // Rua
+                district: dados.bairro,       // Bairro
+                city: `${dados.localidade} - ${dados.uf}`, // Cidade - Estado
+                // number: '' // O número a gente deixa vazio para o usuário digitar
+              });
+
+              // Opcional: Focar no campo número automaticamente
+              // document.getElementById('numeroInput')?.focus();
+            } else {
+              // CEP não encontrado
+              this.messageService.add({severity:'warn', summary:'Atenção', detail:'CEP não encontrado.'});
+            }
+          });
+      }
+    }
+  }
 }

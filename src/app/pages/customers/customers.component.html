@@ -98,8 +98,8 @@
             </div>
             <div class="field">
               <label>CEP</label>
-              <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem"
-                placeholder="00000-000"></p-inputMask>
+              <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem" placeholder="00000-000"
+                (onBlur)="buscarCep()"> </p-inputMask>
             </div>
             <div class="form-row flex gap-3">
               <div class="field" style="flex: 3;">
