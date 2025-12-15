@@ -3,53 +3,58 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../environment/environment';
 
-
 @Injectable({
   providedIn: 'root'
 })
 export class RentalService {
 
   private api = environment.apiUrl; 
-  // Monta a rota específica
+  // Ex: http://localhost:3333/rentals
   private apiUrl = `${this.api}/rentals`;
 
   constructor(private http: HttpClient) {}
 
-  // Listar todas as locações
   getRentals(): Observable<any[]> {
     return this.http.get<any[]>(this.apiUrl);
   }
 
-  // Criar nova locação
   createRental(data: any): Observable<any> {
     return this.http.post(this.apiUrl, data);
   }
 
   returnRental(id: string, extraCosts: number): Observable<any> {
-  return this.http.patch(`${this.apiUrl}/${id}/return`, { extraCosts });
-}
+    return this.http.patch(`${this.apiUrl}/${id}/return`, { extraCosts });
+  }
 
-updateExtraCosts(id: string, extraCosts: number): Observable<any> {
-  return this.http.patch(`${this.apiUrl}/${id}/costs`, { extraCosts });
-}
-uploadContract(id: string, fileBase64: string): Observable<any> {
-  return this.http.patch(`${this.apiUrl}/${id}/contract`, { fileBase64 });
-}
+  updateExtraCosts(id: string, extraCosts: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}/costs`, { extraCosts });
+  }
 
-deleteRental(id: string): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/${id}`);
-}
+  // --- CORRIGIDO (URL CERTA) ---
+  uploadContract(rentalId: string, fileBase64: string) {
+    // O backend espera { contractUrl: "..." }
+    const payload = { contractUrl: fileBase64 }; 
+    return this.http.patch(`${this.apiUrl}/${rentalId}/contract`, payload);
+  }
 
-updateRental(id: string, data: any): Observable<any> {
-  return this.http.put(`${this.apiUrl}/${id}`, data);
-}
+  deleteRental(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
 
-finishRental(id: string, data: any): Observable<any> {
+  updateRental(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}`, data);
+  }
+
+  finishRental(id: string, data: any): Observable<any> {
     return this.http.patch(`${this.apiUrl}/${id}/finish`, data);
   }
 
-  // NOVO: Upload do Termo de Devolução
-  uploadReturnTerm(id: string, file: any): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${id}/upload-return`, { file });
+  // --- SUGESTÃO DE AJUSTE AQUI TAMBÉM ---
+  uploadReturnTerm(id: string, fileBase64: string): Observable<any> {
+    // Se o backend espera 'returnTermUrl', mude a chave abaixo:
+    const payload = { returnTermUrl: fileBase64 };
+    
+    // Verifique se a rota no backend é '/upload-return' ou '/return-term'
+    return this.http.patch(`${this.apiUrl}/${id}/upload-return`, payload);
   }
 }

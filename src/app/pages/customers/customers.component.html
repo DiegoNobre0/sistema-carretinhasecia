@@ -80,61 +80,54 @@
      <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
        
        <p-tabView (onChange)="onTabChange($event)">
-          
-          <p-tabPanel header="Pessoa Física">
-            <div class="flex flex-column gap-3 pt-2">
-              
-              <div class="field">
-                <label>Nome Completo</label>
-                <input pInputText formControlName="name" class="w-full" placeholder="Nome do cliente">
-              </div>
+         
+         <p-tabPanel header="Pessoa Física">
+           <div class="flex flex-column gap-3 pt-2">
+             <div class="field">
+               <label>Nome Completo</label>
+               <input pInputText formControlName="name" class="w-full" placeholder="Nome do cliente">
+             </div>
+             <div class="form-row flex gap-3">
+               <div class="field flex-1">
+                 <label>CPF</label>
+                 <p-inputMask mask="999.999.999-99" formControlName="document" styleClass="w-full" placeholder="000.000.000-00"></p-inputMask>
+               </div>
+               <div class="field flex-1">
+                 <label>Celular/WhatsApp</label>
+                 <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full" placeholder="(00) 00000-0000"></p-inputMask>
+               </div>
+             </div>
+             <div class="field">
+               <label>E-mail</label>
+               <input pInputText formControlName="email" class="w-full">
+             </div>
+             <div class="field">
+               <label>CEP</label>
+               <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem" placeholder="00000-000"></p-inputMask>
+             </div>
+             <div class="form-row flex gap-3">
+               <div class="field" style="flex: 3;">
+                 <label>Logradouro (Rua, Av...)</label>
+                 <input pInputText formControlName="street" class="w-full">
+               </div>
+               <div class="field" style="flex: 1;">
+                 <label>Número</label>
+                 <input pInputText formControlName="number" class="w-full">
+               </div>
+             </div>
+             <div class="form-row flex gap-3">
+               <div class="field flex-1">
+                 <label>Bairro</label>
+                 <input pInputText formControlName="district" class="w-full">
+               </div>
+               <div class="field flex-1">
+                 <label>Cidade</label>
+                 <input pInputText formControlName="city" class="w-full">
+               </div>
+             </div>
 
-              <div class="form-row flex gap-3">
-                <div class="field flex-1">
-                  <label>CPF</label>
-                  <p-inputMask mask="999.999.999-99" formControlName="document" styleClass="w-full" placeholder="000.000.000-00"></p-inputMask>
-                </div>
-                <div class="field flex-1">
-                  <label>Celular/WhatsApp</label>
-                  <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full" placeholder="(00) 00000-0000"></p-inputMask>
-                </div>
-              </div>
-
-              <div class="field">
-                <label>E-mail</label>
-                <input pInputText formControlName="email" class="w-full">
-              </div>
-
-              <div class="field">
-                <label>CEP</label>
-                <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem" placeholder="00000-000"></p-inputMask>
-              </div>
-
-              <div class="form-row flex gap-3">
-                <div class="field" style="flex: 3;">
-                  <label>Logradouro (Rua, Av...)</label>
-                  <input pInputText formControlName="street" class="w-full">
-                </div>
-                <div class="field" style="flex: 1;">
-                  <label>Número</label>
-                  <input pInputText formControlName="number" class="w-full">
-                </div>
-              </div>
-
-              <div class="form-row flex gap-3">
-                <div class="field flex-1">
-                  <label>Bairro</label>
-                  <input pInputText formControlName="district" class="w-full">
-                </div>
-                <div class="field flex-1">
-                  <label>Cidade</label>
-                  <input pInputText formControlName="city" class="w-full">
-                </div>
-              </div>
-
-              <div class="form-row flex gap-3 mt-3 border-top-1 border-gray-800 pt-3">
-                
-                <div class="field flex-1">
+             <div class="form-row flex gap-3 mt-3 border-top-1 border-gray-800 pt-3">
+               <div class="field flex-1">
                    <label>Foto CNH</label>
                    <div class="file-upload-box mt-1">
                      <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*,application/pdf" id="fileCNH" hidden>
@@ -144,7 +137,6 @@
                      </label>
                    </div>
                 </div>
-
                 <div class="field flex-1">
                    <label>Comp. Residência</label>
                    <div class="file-upload-box mt-1">
@@ -155,63 +147,55 @@
                      </label>
                    </div>
                 </div>
+             </div>
+           </div>
+         </p-tabPanel>
 
-              </div>
-            </div>
-          </p-tabPanel>
-
-          <p-tabPanel header="Pessoa Jurídica">
-            <div class="flex flex-column gap-3 pt-2">
-              
-              <div class="field">
-                <label>Razão Social</label>
-                <input pInputText formControlName="name" class="w-full">
-              </div>
-
-              <div class="form-row flex gap-3">
-                <div class="field flex-1">
-                  <label>CNPJ</label>
-                  <p-inputMask mask="99.999.999/9999-99" formControlName="document" styleClass="w-full" placeholder="00.000.000/0000-00"></p-inputMask>
-                </div>
-                <div class="field flex-1">
-                  <label>Telefone</label>
-                  <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full"></p-inputMask>
-                </div>
-              </div>
-
-              <div class="field">
-                <label>E-mail Corporativo</label>
-                <input pInputText formControlName="email" class="w-full">
-              </div>
-
-              <div class="field">
-                <label>CEP</label>
-                <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem"></p-inputMask>
-              </div>
-
-              <div class="form-row flex gap-3">
-                <div class="field" style="flex: 3;">
-                  <label>Logradouro</label>
-                  <input pInputText formControlName="street" class="w-full">
-                </div>
-                <div class="field" style="flex: 1;">
-                  <label>Número</label>
-                  <input pInputText formControlName="number" class="w-full">
-                </div>
-              </div>
-
-              <div class="form-row flex gap-3">
-                <div class="field flex-1">
-                  <label>Bairro</label>
-                  <input pInputText formControlName="district" class="w-full">
-                </div>
-                <div class="field flex-1">
-                  <label>Cidade</label>
-                  <input pInputText formControlName="city" class="w-full">
-                </div>
-              </div>
-
-              <div class="field mt-3 border-top-1 border-gray-800 pt-3">
+         <p-tabPanel header="Pessoa Jurídica">
+           <div class="flex flex-column gap-3 pt-2">
+             <div class="field">
+               <label>Razão Social</label>
+               <input pInputText formControlName="name" class="w-full">
+             </div>
+             <div class="form-row flex gap-3">
+               <div class="field flex-1">
+                 <label>CNPJ</label>
+                 <p-inputMask mask="99.999.999/9999-99" formControlName="document" styleClass="w-full" placeholder="00.000.000/0000-00"></p-inputMask>
+               </div>
+               <div class="field flex-1">
+                 <label>Telefone</label>
+                 <p-inputMask mask="(99) 99999-9999" formControlName="phone" styleClass="w-full"></p-inputMask>
+               </div>
+             </div>
+             <div class="field">
+               <label>E-mail Corporativo</label>
+               <input pInputText formControlName="email" class="w-full">
+             </div>
+             <div class="field">
+               <label>CEP</label>
+               <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem"></p-inputMask>
+             </div>
+             <div class="form-row flex gap-3">
+               <div class="field" style="flex: 3;">
+                 <label>Logradouro</label>
+                 <input pInputText formControlName="street" class="w-full">
+               </div>
+               <div class="field" style="flex: 1;">
+                 <label>Número</label>
+                 <input pInputText formControlName="number" class="w-full">
+               </div>
+             </div>
+             <div class="form-row flex gap-3">
+               <div class="field flex-1">
+                 <label>Bairro</label>
+                 <input pInputText formControlName="district" class="w-full">
+               </div>
+               <div class="field flex-1">
+                 <label>Cidade</label>
+                 <input pInputText formControlName="city" class="w-full">
+               </div>
+             </div>
+             <div class="field mt-3 border-top-1 border-gray-800 pt-3">
                  <label>Contrato Social / Docs</label>
                  <div class="file-upload-box mt-1">
                    <input type="file" (change)="onFileSelected($event, 'cnhUrl')" accept="image/*,application/pdf" id="fileDocPJ" hidden>
@@ -221,94 +205,114 @@
                    </label>
                  </div>
               </div>
-
-            </div>
-          </p-tabPanel>
-
+           </div>
+         </p-tabPanel>
        </p-tabView>
 
        <div class="mt-4 flex justify-content-end gap-2 border-top-1 border-gray-800 pt-3">
          <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
          <button pButton label="Salvar Cliente" type="submit" class="p-button-warning" [disabled]="!customerForm.valid"></button>
        </div>
-
      </form>
   </p-dialog>
 
   <p-dialog header="Documentos" [(visible)]="displayDocsModal" [modal]="true" [style]="{width: '800px'}" [maximizable]="true">
-    <div class="docs-container flex gap-3 justify-content-center flex-wrap" *ngIf="selectedCustomerDocs">
-      
-      <div class="doc-card border-1 border-gray-700 border-round p-3 surface-card text-center" style="flex: 1; min-width: 300px;">
-        <div class="doc-header mb-2 font-bold text-lg"><i class="pi pi-id-card mr-2"></i><span>CNH / Doc</span></div>
-        <div class="doc-content h-20rem flex align-items-center justify-content-center bg-gray-900 border-round overflow-hidden relative">
+    
+    <div class="grid" *ngIf="selectedCustomerDocs">
+        
+        <div class="col-6 flex flex-column align-items-center border-right-1 border-gray-800">
+            <h3 class="text-white mb-2">CNH / Doc</h3>
             
-            <div *ngIf="selectedCustomerDocs.cnhUrl && selectedCustomerDocs.cnhUrl.includes('application/pdf')" class="w-full h-full flex flex-column align-items-center justify-content-center gap-3">
-               <i class="pi pi-file-pdf text-red-500 text-5xl"></i>
-               <button pButton label="Abrir PDF" icon="pi pi-eye" 
-                       class="p-button-outlined p-button-secondary" 
-                       (click)="viewDocumentUrl(selectedCustomerDocs.cnhUrl)">
-               </button>
+            <div *ngIf="selectedCustomerDocs.cnhUrl; else noDoc" class="w-full h-full flex flex-column align-items-center">
+                
+                <div *ngIf="isPdf(selectedCustomerDocs.cnhUrl); else isImageCNH" class="h-20rem w-full">
+                    <object [data]="getSafeUrl(selectedCustomerDocs.cnhUrl)" type="application/pdf" width="100%" height="100%" class="border-round bg-gray-900">
+                        <p class="text-center p-3">Seu navegador não mostra PDF. <a [href]="selectedCustomerDocs.cnhUrl" target="_blank">Baixar</a></p>
+                    </object>
+                    <div class="text-center mt-2">
+                        <a [href]="selectedCustomerDocs.cnhUrl" target="_blank" class="p-button p-button-sm p-button-outlined p-button-info no-underline">
+                           <i class="pi pi-external-link mr-2"></i> Abrir PDF
+                        </a>
+                    </div>
+                </div>
+
+                <ng-template #isImageCNH>
+                    <img [src]="selectedCustomerDocs.cnhUrl" class="w-full h-auto border-round shadow-2" style="max-height: 400px; object-fit: contain;">
+                    <div class="text-center mt-2">
+                        <a [href]="selectedCustomerDocs.cnhUrl" target="_blank" class="p-button p-button-sm p-button-outlined p-button-secondary no-underline">
+                           <i class="pi pi-search mr-2"></i> Ver Original
+                        </a>
+                    </div>
+                </ng-template>
+
             </div>
-
-            <img *ngIf="selectedCustomerDocs.cnhUrl && !selectedCustomerDocs.cnhUrl.includes('application/pdf')" 
-                 [src]="selectedCustomerDocs.cnhUrl" 
-                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: pointer;"
-                 (click)="viewDocumentUrl(selectedCustomerDocs.cnhUrl)"> <span *ngIf="!selectedCustomerDocs.cnhUrl" class="text-gray-500">Sem arquivo</span>
+            <ng-template #noDoc>
+                <div class="flex flex-column align-items-center justify-content-center h-10rem text-gray-500">
+                    <i class="pi pi-times-circle text-4xl mb-2"></i>
+                    <p>Não anexado</p>
+                </div>
+            </ng-template>
         </div>
-      </div>
 
-      <div class="doc-card border-1 border-gray-700 border-round p-3 surface-card text-center" style="flex: 1; min-width: 300px;">
-        <div class="doc-header mb-2 font-bold text-lg"><i class="pi pi-home mr-2"></i><span>Comprovante</span></div>
-        <div class="doc-content h-20rem flex align-items-center justify-content-center bg-gray-900 border-round overflow-hidden relative">
-            
-            <div *ngIf="selectedCustomerDocs.proofUrl && selectedCustomerDocs.proofUrl.includes('application/pdf')" class="w-full h-full flex flex-column align-items-center justify-content-center gap-3">
-               <i class="pi pi-file-pdf text-red-500 text-5xl"></i>
-               <button pButton label="Abrir PDF" icon="pi pi-eye" 
-                       class="p-button-outlined p-button-secondary" 
-                       (click)="viewDocumentUrl(selectedCustomerDocs.proofUrl)">
-               </button>
+        <div class="col-6 flex flex-column align-items-center">
+            <h3 class="text-white mb-2">Comprovante</h3>
+
+            <div *ngIf="selectedCustomerDocs.proofUrl; else noProof" class="w-full h-full flex flex-column align-items-center">
+                
+                <div *ngIf="isPdf(selectedCustomerDocs.proofUrl); else isImageProof" class="h-20rem w-full">
+                    <object [data]="getSafeUrl(selectedCustomerDocs.proofUrl)" type="application/pdf" width="100%" height="100%" class="border-round bg-gray-900">
+                        <p class="text-center p-3">Seu navegador não mostra PDF. <a [href]="selectedCustomerDocs.proofUrl" target="_blank">Baixar</a></p>
+                    </object>
+                    <div class="text-center mt-2">
+                        <a [href]="selectedCustomerDocs.proofUrl" target="_blank" class="p-button p-button-sm p-button-outlined p-button-info no-underline">
+                           <i class="pi pi-external-link mr-2"></i> Abrir PDF
+                        </a>
+                    </div>
+                </div>
+
+                <ng-template #isImageProof>
+                    <img [src]="selectedCustomerDocs.proofUrl" class="w-full h-auto border-round shadow-2" style="max-height: 400px; object-fit: contain;">
+                    <div class="text-center mt-2">
+                        <a [href]="selectedCustomerDocs.proofUrl" target="_blank" class="p-button p-button-sm p-button-outlined p-button-secondary no-underline">
+                           <i class="pi pi-search mr-2"></i> Ver Original
+                        </a>
+                    </div>
+                </ng-template>
+
             </div>
-
-            <img *ngIf="selectedCustomerDocs.proofUrl && !selectedCustomerDocs.proofUrl.includes('application/pdf')" 
-                 [src]="selectedCustomerDocs.proofUrl" 
-                 style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: pointer;"
-                 (click)="viewDocumentUrl(selectedCustomerDocs.proofUrl)">
-            
-            <span *ngIf="!selectedCustomerDocs.proofUrl" class="text-gray-500">Sem arquivo</span>
+            <ng-template #noProof>
+                <div class="flex flex-column align-items-center justify-content-center h-10rem text-gray-500">
+                    <i class="pi pi-times-circle text-4xl mb-2"></i>
+                    <p>Não anexado</p>
+                </div>
+            </ng-template>
         </div>
-      </div>
 
     </div>
   </p-dialog>
+
   <p-dialog header="Histórico e Performance" [(visible)]="displayHistory" [modal]="true" [style]="{width: '850px'}" [draggable]="false" [resizable]="false">
     <div *ngIf="historyData" class="history-content">
       
     <div class="stats-grid grid mb-4">
-        
         <div class="col-6">
             <div class="stat-card theme-green">
-                <div class="icon-wrapper">
-                    <i class="pi pi-wallet"></i>
-                </div>
+                <div class="icon-wrapper"><i class="pi pi-wallet"></i></div>
                 <div class="content">
                     <span class="label">Total Investido</span>
                     <span class="value">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</span>
                 </div>
             </div>
         </div>
-
         <div class="col-6">
             <div class="stat-card theme-blue">
-                <div class="icon-wrapper">
-                    <i class="pi pi-shopping-bag"></i>
-                </div>
+                <div class="icon-wrapper"><i class="pi pi-shopping-bag"></i></div>
                 <div class="content">
                     <span class="label">Locações Realizadas</span>
                     <span class="value">{{ historyData.stats.totalRentals }}</span>
                 </div>
             </div>
         </div>
-
       </div>
 
       <div class="mt-4">
@@ -339,14 +343,14 @@
               <td class="text-center">
                 <button *ngIf="h.contractUrl" 
                         pButton icon="pi pi-file-pdf" 
-                        class="p-button-rounded p-button-success  p-button-danger " 
+                        class="p-button-rounded p-button-danger" 
                         pTooltip="Contrato"
                         tooltipPosition="top"
                         (click)="viewContract(h)">
                 </button>
                 <button *ngIf="h.returnTermUrl" 
                             pButton icon="pi pi-file-check" 
-                            class="p-button-rounded p-button-success p-button-outlined p-button-sm" 
+                            class="p-button-rounded p-button-success p-button-outlined p-button-sm ml-2" 
                             pTooltip="Termo de Devolução"
                             tooltipPosition="top"
                             (click)="viewDocumentUrl(h.returnTermUrl)">
@@ -362,6 +366,24 @@
   </p-dialog>
 
   <p-dialog 
+    header="Visualização de Documento" 
+    [(visible)]="displayDocumentModal" 
+    (onHide)="onCloseDocumentModal()"
+    [modal]="true" 
+    [style]="{width: '90%', height: '90%'}" 
+    [maximizable]="true">
+    
+    <div class="h-full w-full flex flex-column bg-black-alpha-90 p-3 border-round" *ngIf="sanitizedDocUrl">
+      <object [data]="sanitizedDocUrl" type="application/pdf" width="100%" height="100%" class="h-full">
+        <p class="text-white text-center mt-5">
+          Seu navegador não exibiu o PDF. 
+          <a [href]="sanitizedDocUrl" download="documento.pdf" class="text-yellow-500 underline">Baixar arquivo</a>
+        </p>
+      </object>
+    </div>
+  </p-dialog>
+
+  <p-dialog 
     header="Contrato Assinado" 
     [(visible)]="displayContractModal" 
     (onHide)="onCloseDocumentModal()"
@@ -373,7 +395,7 @@
       <object [data]="sanitizedContractUrl" type="application/pdf" width="100%" height="100%" class="h-full">
         <p class="text-white text-center mt-5">
           Seu navegador não exibiu o PDF. 
-          <a [href]="sanitizedContractUrl" download="contrato_historico.pdf" class="text-yellow-500 underline">Baixar arquivo</a>
+          <a [href]="sanitizedContractUrl" download="contrato.pdf" class="text-yellow-500 underline">Baixar arquivo</a>
         </p>
       </object>
     </div>
