@@ -117,22 +117,26 @@ export class RentalsComponent implements OnInit {
     this.rentalForm.valueChanges.subscribe(() => this.calculateTotal());
   }
 
-  // --- CARREGAMENTO DE DADOS ---
-  loadData() {    
+loadData() {    
     // Locações
     this.rentalService.getRentals().subscribe({
       next: (data) => {
-        this.activeRentals = data.filter(r => r.status === 'OPEN');
+        
+        // --- MUDANÇA AQUI: PEGA 'OPEN' E 'RESERVED' ---
+        this.activeRentals = data.filter(r => r.status === 'OPEN' || r.status === 'RESERVED');
+        
+        // Histórico (Fechado ou Cancelado)
         this.closedRentals = data.filter(r => r.status === 'CLOSED' || r.status === 'CANCELED');
+        
+        // A lista futureRentals não é mais necessária para a tela, 
+        // mas se quiser manter por garantia, pode deixar:
         this.futureRentals = data.filter(r => r.status === 'RESERVED');
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar locações.' })
     });
 
-    // Clientes
+    // ... restante do código (clientes e trailers) continua igual
     this.customerService.getCustomers().subscribe(data => this.customers = data);
-    
-    // Carretinhas (Disponíveis)
     this.trailerService.getTrailers().subscribe(data => {
       this.trailers = data.filter(t => t.status !== 'MAINTENANCE');
     });
@@ -501,4 +505,14 @@ export class RentalsComponent implements OnInit {
       this.currentBlobUrl = null;
     }
   }
+
+  confirmPickup(rental: any) {
+  this.rentalService.startRental(rental.id).subscribe({
+    next: () => {
+      this.messageService.add({severity:'success', summary:'Sucesso', detail:'Locação iniciada!'});
+      this.loadData();
+    },
+    error: () => this.messageService.add({severity:'error', summary:'Erro', detail:'Falha ao iniciar.'})
+  });
+}
 }

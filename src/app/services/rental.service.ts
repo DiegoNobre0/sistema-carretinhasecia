@@ -57,4 +57,8 @@ export class RentalService {
     // Verifique se a rota no backend é '/upload-return' ou '/return-term'
     return this.http.patch(`${this.apiUrl}/${id}/upload-return`, payload);
   }
+
+  startRental(id: string): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/${id}/start`, {});
+}
 }
