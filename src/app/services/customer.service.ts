@@ -32,9 +32,10 @@ export class CustomerService {
 updateCustomer(id: string, data: any): Observable<any> {
   return this.http.put(`${this.apiUrl}/${id}`, data);
 }
-deleteCustomer(id: string): Observable<any> {
-  // Passando o ID via Query Param
-  return this.http.delete(`${this.apiUrl}/customer`, { params: { id: id } });
+// customer.service.ts (ou trailer.service.ts)
+delete(id: string): Observable<void> {
+  // Ajuste a URL para bater na sua rota do backend
+  return this.http.delete<void>(`${this.apiUrl}/${id}`);
 }
 
 }

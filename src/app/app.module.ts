@@ -13,7 +13,8 @@ import { MessageService } from 'primeng/api';
 import localePt from '@angular/common/locales/pt';
 import { registerLocaleData } from '@angular/common';
 import { UsersComponent } from './pages/users/users.component';
-
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
+import { ConfirmationService } from 'primeng/api';
 
 registerLocaleData(localePt);
 
@@ -27,9 +28,10 @@ registerLocaleData(localePt);
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    ToastModule
+    ToastModule,
+    ConfirmDialogModule
   ],
-  providers: [{ provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },MessageService, { provide: LOCALE_ID, useValue: 'pt-BR' }],
+  providers: [{ provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },MessageService, { provide: LOCALE_ID, useValue: 'pt-BR' },ConfirmationService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

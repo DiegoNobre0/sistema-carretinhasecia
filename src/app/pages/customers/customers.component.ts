@@ -6,6 +6,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CustomerService } from '../../services/customer.service';
 import { ImageCompressService } from '../../services/image-compress.service';
 import { PdfCompressService } from '../../services/pdf-compress.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // <--- Importe aqui
+
 
 // PrimeNG imports
 import { ButtonModule } from 'primeng/button';
@@ -27,7 +29,7 @@ import { TooltipModule } from 'primeng/tooltip';
     CommonModule, ReactiveFormsModule,
     ButtonModule, DialogModule, InputTextModule, 
     TableModule, DropdownModule, InputMaskModule,
-    TabViewModule, CalendarModule, ToastModule, TooltipModule
+    TabViewModule, CalendarModule, ToastModule, TooltipModule,ConfirmDialogModule
   ],
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.scss'],
@@ -364,7 +366,7 @@ export class CustomersComponent implements OnInit {
     }
   }
 
-  deleteCustomer(customer: any) {
+ deleteCustomer(customer: any) {
     this.confirmationService.confirm({
         message: 'Tem certeza que deseja excluir ' + customer.name + '?',
         header: 'Confirmar Exclusão',
@@ -374,19 +376,35 @@ export class CustomersComponent implements OnInit {
         acceptButtonStyleClass: 'p-button-danger p-button-text',
         rejectButtonStyleClass: 'p-button-text',
         accept: () => {
-            // Lógica real de exclusão (chamar sua API) vai aqui
-            // this.customerService.delete(customer.id)...
-            
-            this.messageService.add({
-                severity: 'success', 
-                summary: 'Sucesso', 
-                detail: 'Cliente excluído com sucesso', 
-                life: 3000
+            // --- AQUI ESTÁ A LÓGICA DE APAGAR ---
+            this.customerService.delete(customer.id).subscribe({
+                next: () => {
+                    // 1. Mostra mensagem de sucesso
+                    this.messageService.add({
+                        severity: 'success', 
+                        summary: 'Sucesso', 
+                        detail: 'Registro excluído com sucesso', 
+                        life: 3000
+                    });
+
+                    // 2. ATUALIZA A TABELA NA TELA
+                    // Opção A: Recarregar tudo do banco
+                     this.loadCustomers(); 
+                    
+                    // Opção B (Mais rápida): Remover apenas o item da lista localmente
+                    this.customers = this.customers.filter(c => c.id !== customer.id);
+                },
+                error: (err) => {
+                    // 3. Trata erro (ex: não pode apagar porque tem aluguel)
+                    this.messageService.add({
+                        severity: 'error', 
+                        summary: 'Erro', 
+                        detail: err.error.message || 'Erro ao excluir registro', // Pega a msg do backend
+                        life: 4000
+                    });
+                }
             });
-        },
-        reject: () => {
-            // Opcional: Lógica se o usuário cancelar
         }
     });
-  }
+}
 }
