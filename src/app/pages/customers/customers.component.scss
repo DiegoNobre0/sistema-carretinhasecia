@@ -117,3 +117,89 @@
     border-left: 4px solid #eab308;
   }
 }
+/* --- MODAL DE DOCUMENTOS --- */
+.documents-view {
+  padding: 1rem;
+
+  /* Títulos das seções (CNH, Comprovante, Carro) */
+  h3 {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9ca3af; /* Cinza claro, igual ao label do stat-card */
+    font-weight: 600;
+    margin-bottom: 0.75rem !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 16px;
+      background-color: #eab308; /* Amarelo (Accent) */
+      border-radius: 2px;
+    }
+  }
+
+  /* Container do Documento (O box cinza/preto) */
+  .border-round.bg-gray-900, /* Alvo para PDF */
+  img.border-round /* Alvo para Imagem */ {
+    background: #15171a !important; /* Fundo bem escuro */
+    border: 1px solid #333;
+    border-radius: 12px !important;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5); /* Sombra interna para profundidade */
+    
+    /* Garante que a imagem/pdf não extrapole */
+    overflow: hidden; 
+    
+    &:hover {
+      border-color: #555;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 5px 15px rgba(0,0,0,0.3);
+    }
+  }
+
+  /* Estado "Não Anexado" */
+  .text-gray-500 {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px dashed #333; /* Borda tracejada indicando vazio */
+    border-radius: 12px;
+    width: 100%;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: #444;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    i {
+      color: #ef4444; /* Vermelho suave para o ícone de erro */
+      opacity: 0.8;
+    }
+  }
+
+  /* Botões de Ação (Baixar, Abrir) */
+  .p-button-outlined {
+    border-color: #444;
+    color: #e5e7eb;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #eab308; /* Amarelo no hover */
+      color: #eab308;
+    }
+  }
+
+  /* Separadores e Bordas de Layout */
+  .border-right-1, .border-top-1 {
+    border-color: #333 !important; /* Suaviza as divisões do grid */
+  }
+
+  /* Ajuste específico para o PDF Object */
+  object {
+    display: block;
+    border-radius: 12px;
+  }
+}

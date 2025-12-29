@@ -40,10 +40,42 @@
       <h3><i class="pi pi-plus-circle"></i> Nova Reserva</h3>
       
       <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()">
-        <div class="field">
+       <div class="field">
           <label>Cliente</label>
-          <p-dropdown [options]="customers" optionLabel="name" optionValue="id" formControlName="customerId" 
-                      placeholder="Pesquisar cliente..." [filter]="true" styleClass="w-full"></p-dropdown>
+          <p-dropdown 
+              [options]="customers" 
+              optionLabel="name" 
+              optionValue="id" 
+              formControlName="customerId" 
+              placeholder="Pesquisar cliente..." 
+              [filter]="true" 
+              filterBy="name,document"
+              styleClass="w-full"
+              
+              optionDisabled="isBlocked"> <ng-template let-customer pTemplate="selectedItem">
+                 <div class="flex align-items-center gap-2" *ngIf="customer">
+                    <span>{{ customer.name }}</span>
+                 </div>
+              </ng-template>
+
+              <ng-template let-customer pTemplate="item">
+                 <div class="flex flex-column gap-1 border-bottom-1 surface-border pb-1" 
+                      [ngClass]="{'opacity-50': customer.isBlocked}">
+                    
+                    <div class="flex align-items-center justify-content-between">
+                       <span class="font-bold">{{ customer.name }}</span>
+                       <span *ngIf="customer.isBlocked" class="text-red-500 text-xs font-bold border-1 border-red-500 px-2 border-round">
+                          <i class="pi pi-lock"></i> BLOQUEADO
+                       </span>
+                    </div>
+                    
+                    <small *ngIf="customer.isBlocked && customer.blockReason" class="text-red-400 block mt-1">
+                       Motivo: {{ customer.blockReason }}
+                    </small>
+                 </div>
+              </ng-template>
+
+          </p-dropdown>
         </div>
 
         <div class="field">

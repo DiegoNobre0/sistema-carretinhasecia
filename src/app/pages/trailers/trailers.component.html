@@ -2,26 +2,28 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="page-container">
-  
-  <div class="header-action card-dark mb-4">
+
+  <div class="header-action">
     <div class="title-area">
       <h1>Frota de Carretinhas</h1>
       <p class="subtitle">Gerencie seus veículos disponíveis.</p>
     </div>
 
     <div class="actions-area">
-      <span class="p-input-icon-left search-box">
+      <div class="search-box">
         <i class="pi pi-search"></i>
-        <input type="text" pInputText [(ngModel)]="searchTerm" (input)="filterList()" placeholder="Buscar placa ou modelo..." />
-      </span>
-      <button pButton label="Nova Carretinha" icon="pi pi-plus" class="p-button-warning" (click)="showDialog()"></button>
+        <input type="text" pInputText [(ngModel)]="searchTerm" (input)="filterList()"
+          placeholder="Buscar placa ou modelo..." />
+      </div>
+      <button pButton label="Nova Carretinha" icon="pi pi-plus" class="p-button-warning font-bold"
+        (click)="showDialog()"></button>
     </div>
   </div>
 
   <div class="trailers-grid">
-    
+
     <div class="trailer-card" *ngFor="let item of filteredTrailers">
-      
+
       <div class="card-image">
         <div class="status-badge">
           <p-tag [value]="getStatusLabel(item.status)" [severity]="getStatusSeverity(item.status)"></p-tag>
@@ -34,71 +36,87 @@
       </div>
 
       <div class="card-content">
-        <div class="info-header mb-3">
-          <h3 class="plate">{{ item.plate }}</h3>
-          <span class="model text-yellow-500 font-bold">{{ item.model }}</span>
-        </div>
         
+        <div class="info-header">
+          <div class="plate-wrapper">
+            <h3 class="plate">{{ item.plate }}</h3>
+            <span class="subtitle-year">{{ item.manufacturingYear }}/{{ item.modelYear }}</span>
+          </div>
+          <span class="model-tag">{{ item.model }}</span>
+        </div>
+
         <div class="specs-grid">
-          
-          <div class="spec-item" pTooltip="Dimensões" tooltipPosition="top">
-            <i class="pi pi-arrows-h text-primary"></i>
-            <span>{{ item.size }}</span>
+          <div class="spec-item">
+            <span class="label">DIMENSÕES</span>
+            <div class="value-row">
+              <i class="pi pi-arrows-h text-blue-400"></i>
+              <span>{{ item.size }}</span>
+            </div>
           </div>
 
-          <div class="spec-item" pTooltip="Capacidade de Carga" tooltipPosition="top">
-            <i class="pi pi-box text-orange-400"></i>
-            <span>{{ item.capacity || '-' }}</span>
+          <div class="spec-item">
+            <span class="label">CAPACIDADE</span>
+            <div class="value-row">
+              <i class="pi pi-box text-orange-400"></i>
+              <span>{{ item.capacity || '-' }}</span>
+            </div>
           </div>
 
-          <div class="spec-item" pTooltip="Ano Fab./Mod." tooltipPosition="top">
-            <i class="pi pi-calendar text-green-400"></i>
-            <span>{{ item.manufacturingYear }}/{{ item.modelYear }}</span>
+          <div class="spec-item">
+            <span class="label">EIXOS</span>
+            <div class="value-row">
+              <i class="pi pi-objects-column text-purple-400"></i>
+              <span>{{ item.axles }}</span>
+            </div>
           </div>
 
-          <div class="spec-item" pTooltip="Quantidade de Eixos" tooltipPosition="top">
-            <i class="pi pi-objects-column text-blue-400"></i> <span>{{ item.axles }} Eixo(s)</span>
+          <div class="spec-item">
+            <span class="label">COR</span>
+            <div class="value-row">
+              <i class="pi pi-palette text-green-400"></i>
+              <span>{{ item.color || 'Padrão' }}</span>
+            </div>
           </div>
-
-          <div class="spec-item" pTooltip="Cor do Veículo" tooltipPosition="top">
-            <i class="pi pi-palette text-purple-400"></i>
-            <span>{{ item.color || 'Preta' }}</span>
-          </div>
-
         </div>
       </div>
 
       <div class="card-actions">
-        <button pButton icon="pi pi-pencil" label="Editar" 
-                class="p-button-text p-button-sm p-button-info" 
-                (click)="editTrailer(item)">
-        </button>
         
-        <button pButton icon="pi pi-trash" 
-                class="p-button-text p-button-sm p-button-danger" 
-                pTooltip="Excluir"
-                (click)="deleteTrailer($event, item)">
-        </button>
+        <div class="primary-action">
+          <button pButton icon="pi pi-file" label="Doc" 
+            class="p-button-text p-button-sm p-button-secondary"
+            pTooltip="Ver Documento (CRLV)" (click)="viewDocument(item)">
+          </button>
+        </div>
+
+        <div class="secondary-actions">
+          <button pButton icon="pi pi-pencil" 
+            class="p-button-text p-button-sm p-button-info" 
+            pTooltip="Editar"
+            (click)="editTrailer(item)">
+          </button>
+
+          <button pButton icon="pi pi-trash" 
+            class="p-button-text p-button-sm p-button-danger" 
+            pTooltip="Excluir"
+            (click)="deleteTrailer($event, item)">
+          </button>
+        </div>
       </div>
 
     </div>
 
     <div *ngIf="filteredTrailers.length === 0" class="col-12 text-center p-5 w-full">
-      <p class="text-gray-500">Nenhuma carretinha encontrada.</p>
+      <p class="text-gray-500 text-lg">Nenhuma carretinha encontrada.</p>
     </div>
 
   </div>
 
-  <p-dialog 
-    [header]="isEditMode ? 'Editar Carretinha' : 'Nova Carretinha'" 
-    [(visible)]="displayModal" 
-    [modal]="true" 
-    [style]="{width: '500px'}"
-    [draggable]="false" 
-    [resizable]="false">
-    
+  <p-dialog [header]="isEditMode ? 'Editar Carretinha' : 'Nova Carretinha'" [(visible)]="displayModal" [modal]="true"
+    [style]="{width: '550px'}" [draggable]="false" [resizable]="false">
+
     <form [formGroup]="trailerForm" (ngSubmit)="onSubmit()" class="form-grid pt-2">
-      
+
       <div class="form-row flex gap-3">
         <div class="field flex-1">
           <label>Placa</label>
@@ -133,37 +151,72 @@
       </div>
 
       <div class="form-row flex gap-3">
-         <div class="field flex-1">
-            <label>Dimensões</label>
-            <input pInputText formControlName="size" class="w-full" placeholder="Ex: 2.00 x 1.20">
-         </div>
-         <div class="field flex-1">
-            <label>Capacidade (kg)</label>
-            <input pInputText formControlName="capacity" class="w-full" placeholder="Ex: 500 kg">
-         </div>
+        <div class="field flex-1">
+          <label>Dimensões</label>
+          <input pInputText formControlName="size" class="w-full" placeholder="Ex: 2.00 x 1.20">
+        </div>
+        <div class="field flex-1">
+          <label>Capacidade (kg)</label>
+          <input pInputText formControlName="capacity" class="w-full" placeholder="Ex: 500 kg">
+        </div>
       </div>
 
-      <div class="field mt-2">
-        <label>Foto do Veículo</label>
-        <div class="file-upload-box">
-          <input type="file" (change)="onFileSelected($event)" accept="image/*" id="fileTrailer" hidden>
-          <label for="fileTrailer" class="upload-btn w-full justify-content-center p-3 border-round border-1 border-gray-600 cursor-pointer flex align-items-center gap-2 hover:bg-gray-800 transition-colors">
-            <i class="pi pi-camera"></i>
-            <span>{{ trailerForm.get('photoUrl')?.value ? 'Alterar Foto' : 'Escolher Foto' }}</span>
-          </label>
-          
-          <div *ngIf="trailerForm.get('photoUrl')?.value" class="preview-mini mt-2 text-center">
-            <img [src]="trailerForm.get('photoUrl')?.value" style="max-height: 100px; border-radius: 8px; border: 1px solid #444;">
+      <div class="flex gap-3 mt-3 border-top-1 border-gray-800 pt-3">
+
+        <div class="field flex-1">
+          <label class="mb-2 block">Foto do Veículo</label>
+          <div class="file-upload-box">
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" id="fileTrailer" hidden>
+            <label for="fileTrailer"
+              class="upload-btn w-full justify-content-center p-2 border-round border-1 border-gray-600 cursor-pointer flex align-items-center gap-2 hover:bg-gray-800 transition-colors">
+              <i class="pi pi-camera"></i>
+              <span class="text-sm">{{ trailerForm.get('photoUrl')?.value ? 'Alterar' : 'Escolher' }}</span>
+            </label>
+          </div>
+          <div *ngIf="trailerForm.get('photoUrl')?.value" class="mt-2 text-center">
+            <img [src]="trailerForm.get('photoUrl')?.value" style="height: 60px; border-radius: 4px; border: 1px solid #444;">
           </div>
         </div>
+
+        <div class="field flex-1">
+          <label class="mb-2 block">Documento (CRLV)</label>
+          <div class="file-upload-box">
+            <input type="file" (change)="onDocumentSelected($event)" accept="image/*,application/pdf" id="fileDoc" hidden>
+            <label for="fileDoc"
+              class="upload-btn w-full justify-content-center p-2 border-round border-1 border-gray-600 cursor-pointer flex align-items-center gap-2 hover:bg-gray-800 transition-colors">
+              <i class="pi pi-file"></i>
+              <span class="text-sm">{{ fileNameDoc || 'Anexar Doc' }}</span>
+            </label>
+          </div>
+          <div *ngIf="fileNameDoc || trailerForm.get('documentUrl')?.value" class="mt-2 text-center text-green-500 text-sm font-bold">
+            <i class="pi pi-check-circle"></i> Anexado
+          </div>
+        </div>
+
       </div>
 
       <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 border-gray-800">
         <button pButton label="Cancelar" type="button" class="p-button-text" (click)="displayModal=false"></button>
-        <button pButton [label]="isEditMode ? 'Salvar Alterações' : 'Cadastrar'" type="submit" class="p-button-warning" [disabled]="!trailerForm.valid"></button>
+        <button pButton [label]="isEditMode ? 'Salvar' : 'Cadastrar'" type="submit" class="p-button-warning"
+          [disabled]="!trailerForm.valid"></button>
       </div>
 
     </form>
+  </p-dialog>
+
+  <p-dialog header="Visualizar Documento" [(visible)]="displayDocModal" [modal]="true"
+    [style]="{width: '80%', height: '90%'}" [maximizable]="true">
+
+    <div class="w-full h-full flex align-items-center justify-content-center bg-gray-900 border-round p-2"
+      *ngIf="sanitizedDocUrl">
+      <object *ngIf="isPdf(trailerForm.get('documentUrl')?.value || sanitizedDocUrl.toString())" [data]="sanitizedDocUrl"
+        type="application/pdf" width="100%" height="100%" class="border-round">
+        <p class="text-white">Seu navegador não exibe PDF. <a [href]="sanitizedDocUrl" target="_blank">Baixar</a></p>
+      </object>
+
+      <img *ngIf="!isPdf(trailerForm.get('documentUrl')?.value || sanitizedDocUrl.toString())" [src]="sanitizedDocUrl"
+        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+    </div>
   </p-dialog>
 
 </div>

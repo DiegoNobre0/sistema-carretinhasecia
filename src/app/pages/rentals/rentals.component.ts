@@ -32,9 +32,9 @@ import { ConfirmationService, MessageService } from 'primeng/api';
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, FormsModule,
-    ButtonModule, DialogModule, TableModule, 
-    DropdownModule, CalendarModule, InputNumberModule, 
-    TagModule, TooltipModule, TabViewModule, ConfirmDialogModule, 
+    ButtonModule, DialogModule, TableModule,
+    DropdownModule, CalendarModule, InputNumberModule,
+    TagModule, TooltipModule, TabViewModule, ConfirmDialogModule,
     CheckboxModule, InputTextareaModule, ToastModule
   ],
   providers: [DatePipe, ConfirmationService, MessageService],
@@ -47,21 +47,21 @@ export class RentalsComponent implements OnInit {
   activeRentals: any[] = [];
   closedRentals: any[] = [];
   futureRentals: any[] = [];
-  
+
   customers: any[] = [];
-  trailers: any[] = []; 
+  trailers: any[] = [];
 
   // Variáveis de Controle
   isEditMode = false;
   editingId: string | null = null;
-  disabledDates: Date[] = []; 
+  disabledDates: Date[] = [];
 
   // --- MODAL DE LOCAÇÃO (CRIAÇÃO) ---
   displayModal = false;
   rentalForm: FormGroup;
   totalCalculado: number = 0;
   diasCalculados: number = 0;
-  
+
   // Resumo Visual
   selectedCustomerObj: any = null;
   selectedTrailerObj: any = null;
@@ -97,7 +97,9 @@ export class RentalsComponent implements OnInit {
       trailerId: [null, Validators.required],
       dates: [null, Validators.required],
       dailyRate: [null, Validators.required],
-      signalValue: [0]
+      signalValue: [0],
+      startTime: [new Date(), Validators.required],
+      startNow: [false]
     });
 
     // 2. Form da Devolução
@@ -117,17 +119,17 @@ export class RentalsComponent implements OnInit {
     this.rentalForm.valueChanges.subscribe(() => this.calculateTotal());
   }
 
-loadData() {    
+  loadData() {
     // Locações
     this.rentalService.getRentals().subscribe({
       next: (data) => {
-        
+
         // --- MUDANÇA AQUI: PEGA 'OPEN' E 'RESERVED' ---
         this.activeRentals = data.filter(r => r.status === 'OPEN' || r.status === 'RESERVED');
-        
+
         // Histórico (Fechado ou Cancelado)
         this.closedRentals = data.filter(r => r.status === 'CLOSED' || r.status === 'CANCELED');
-        
+
         // A lista futureRentals não é mais necessária para a tela, 
         // mas se quiser manter por garantia, pode deixar:
         this.futureRentals = data.filter(r => r.status === 'RESERVED');
@@ -146,19 +148,25 @@ loadData() {
     this.displayModal = true;
     this.isEditMode = false;
     this.editingId = null;
-    this.rentalForm.reset();
+
+    // Reseta e define a hora padrão como "Agora"
+    this.rentalForm.reset({
+      signalValue: 0,
+      startTime: new Date()
+    });
+
     this.totalCalculado = 0;
     this.selectedCustomerObj = null;
     this.selectedTrailerObj = null;
-    this.disabledDates = []; 
+    this.disabledDates = [];
   }
 
   // --- LÓGICA DE DATAS OCUPADAS ---
-  onTrailerSelect() {    
+  onTrailerSelect() {
     const trailerId = this.rentalForm.get('trailerId')?.value;
-    
+
     this.disabledDates = [];
-    this.rentalForm.patchValue({ dates: null }); 
+    this.rentalForm.patchValue({ dates: null });
     this.calculateTotal();
 
     if (trailerId) {
@@ -167,29 +175,41 @@ loadData() {
       // Verifica datas ocupadas no backend (se implementado)
       // @ts-ignore
       if (this.trailerService['getBusyDates']) {
-         // @ts-ignore
-         this.trailerService.getBusyDates(trailerId).subscribe(ranges => {
-            let allDisabled: Date[] = [];
-            ranges.forEach((range: any) => {
-              let current = new Date(range.startDate);
-              const end = new Date(range.expectedEndDate);
-              current.setHours(0,0,0,0);
-              end.setHours(0,0,0,0);
-              
-              while (current <= end) {
-                allDisabled.push(new Date(current));
-                current.setDate(current.getDate() + 1);
-              }
-            });
-            this.disabledDates = [...allDisabled];
-         });
+        // @ts-ignore
+        this.trailerService.getBusyDates(trailerId).subscribe(ranges => {
+          let allDisabled: Date[] = [];
+          ranges.forEach((range: any) => {
+            let current = new Date(range.startDate);
+            const end = new Date(range.expectedEndDate);
+            current.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+
+            while (current <= end) {
+              allDisabled.push(new Date(current));
+              current.setDate(current.getDate() + 1);
+            }
+          });
+          this.disabledDates = [...allDisabled];
+        });
       }
     }
   }
 
   calculateTotal() {
     const formVal = this.rentalForm.value;
-    
+
+    if (this.selectedCustomerObj?.isBlocked) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Bloqueado',
+        detail: `Este cliente está bloqueado: ${this.selectedCustomerObj.blockReason || 'Sem motivo'}`
+      });
+      // Limpa a seleção
+      this.rentalForm.patchValue({ customerId: null });
+      this.selectedCustomerObj = null;
+      return;
+    }
+
     if (formVal.customerId) {
       this.selectedCustomerObj = this.customers.find(c => c.id === formVal.customerId);
     }
@@ -213,16 +233,30 @@ loadData() {
   onSubmit() {
     if (this.rentalForm.valid) {
       const val = this.rentalForm.value;
+
+      const timeComponent = new Date(val.startTime);
+
+      const startDateBase = new Date(val.dates[0]);
+      startDateBase.setHours(timeComponent.getHours(), timeComponent.getMinutes(), 0);
+
+      const endDateBase = new Date(val.dates[1]);
+      endDateBase.setHours(timeComponent.getHours(), timeComponent.getMinutes(), 0);
+
+      const rentalStatus = val.startNow ? 'OPEN' : 'RESERVED';
+
       const payload = {
         customerId: val.customerId,
         trailerId: val.trailerId,
-        startDate: val.dates[0],
-        expectedEndDate: val.dates[1],
+
+        startDate: startDateBase, // <--- Envia a data COM a hora correta
+        expectedEndDate: endDateBase, // A data prevista de fim pode ficar 00:00 ou fim do dia, conforme sua regra
+
         dailyRate: val.dailyRate,
         signalValue: val.signalValue,
-        totalValue: this.totalCalculado
+        totalValue: this.totalCalculado,
+        status: rentalStatus
       };
-
+      console.log('Enviando Payload:', payload);
       if (this.isEditMode && this.editingId) {
         this.rentalService.updateRental(this.editingId, payload).subscribe({
           next: () => {
@@ -242,7 +276,7 @@ loadData() {
           error: (err) => this.messageService.add({ severity: 'error', summary: 'Erro', detail: err.error?.error || 'Erro desconhecido' })
         });
       }
-    }    
+    }
   }
 
   // --- DOCUMENTOS (CONTRATO) ---
@@ -256,9 +290,9 @@ loadData() {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.rentalService.uploadContract(rental.id, e.target.result).subscribe({
-          next: () => { 
-            this.loadData(); 
-            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Contrato anexado!' }); 
+          next: () => {
+            this.loadData();
+            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Contrato anexado!' });
           },
           error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar.' })
         });
@@ -279,33 +313,41 @@ loadData() {
   // =========================================================
   // FLUXO DE DEVOLUÇÃO (FINALIZAÇÃO)
   // =========================================================
-  
+
   openReturnModal(rental: any) {
     this.selectedRental = rental;
     this.displayReturnModal = true;
-    this.returnFile = null; // Reseta o arquivo
-    
-    // Reseta o formulário
+    this.returnFile = null;
+
+    // Define data/hora atuais como sugestão de devolução
+    const now = new Date();
+
     this.returnForm.reset({
-      returnDate: new Date(),
-      returnTime: new Date(),
+      returnDate: now,
+      returnTime: now,
       hasDamage: false,
       damageDescription: '',
       damageCost: 0,
       lateFee: 0,
       cleaningFee: 0
     });
-  }
 
+    // --- ADICIONE ISTO: Ouve mudanças para recalcular a multa em tempo real ---
+    this.returnForm.get('returnDate')?.valueChanges.subscribe(() => this.calculateReturnFees());
+    this.returnForm.get('returnTime')?.valueChanges.subscribe(() => this.calculateReturnFees());
+
+    // Roda uma vez inicial para já calcular se abriu o modal atrasado
+    setTimeout(() => this.calculateReturnFees(), 100);
+  }
   // PASSO 1: Apenas Baixar o PDF
   generateReturnOnly() {
     if (!this.selectedRental) return;
-    
+
     this.pdfService.generateReturnTerm(
-      this.selectedRental, 
+      this.selectedRental,
       this.returnForm.value
     );
-    
+
     this.messageService.add({ severity: 'info', summary: 'Download', detail: 'Imprima, assine e anexe.' });
   }
 
@@ -317,8 +359,9 @@ loadData() {
     }
   }
 
-// --- ALTERAÇÃO 2: Upload na Finalização ---
+  // --- ALTERAÇÃO 2: Upload na Finalização ---
   finalCheckAndFinish() {
+    debugger
     if (!this.selectedRental || !this.returnFile) return;
 
     this.messageService.add({ severity: 'info', summary: 'Aguarde', detail: 'Salvando termo e finalizando...' });
@@ -338,22 +381,56 @@ loadData() {
     reader.readAsDataURL(this.returnFile);
   }
   // PASSO 4: Mudar Status no Banco
-  finishRentalOnBackend() {
+ finishRentalOnBackend() {
+    // Validação básica
+    if (!this.selectedRental || !this.returnForm.value.returnDate) return;
+
+    // 1. MESCLAR DATA E HORA DE DEVOLUÇÃO (Crucial para o banco salvar o horário certo)
+    const formVal = this.returnForm.value;
+    const finalEndDate = new Date(formVal.returnDate);
+    
+    if (formVal.returnTime) {
+      const time = new Date(formVal.returnTime);
+      finalEndDate.setHours(time.getHours(), time.getMinutes(), 0);
+    }
+
+    // 2. CALCULAR O VALOR FINAL REAL
+    // Pega o valor original da locação (Base)
+    const baseValue = this.selectedRental.totalValue || 0;
+    
+    // Soma os extras do formulário
+    const extras = (formVal.lateFee || 0) + (formVal.cleaningFee || 0) + (formVal.damageCost || 0);
+    
+    // Valor final a ser salvo no banco (Base + Extras)
+    const finalTotalValue = baseValue + extras;
+
     const payload = {
-      endDate: this.returnForm.value.returnDate,
-      totalValue: 0 // Valor base, ou lógica de soma se quiser
+      endDate: finalEndDate,
+      totalValue: finalTotalValue 
     };
+
+    console.log('Enviando Finalização:', payload); // <--- AJUDA NO DEBUG
 
     this.rentalService.finishRental(this.selectedRental.id, payload).subscribe({
       next: () => {
-         this.loadData(); // <--- CORREÇÃO: loadData() em vez de loadRentals()
-         this.displayReturnModal = false;
-         this.messageService.add({ severity: 'success', summary: 'Concluído', detail: 'Locação finalizada com sucesso!' });
+        this.loadData();
+        this.displayReturnModal = false;
+        this.messageService.add({ severity: 'success', summary: 'Concluído', detail: 'Locação finalizada com sucesso!' });
       },
-      error: () => this.messageService.add({severity:'error', summary:'Erro', detail:'Falha ao finalizar no sistema'})
+      error: (err) => {
+        console.error('Erro backend:', err); // <--- OLHE ISSO NO CONSOLE DO NAVEGADOR
+        
+        // Tenta mostrar a mensagem específica do backend, se houver
+        const msgErro = err.error?.message || 'Falha ao finalizar no sistema';
+        
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Erro', 
+          detail: msgErro 
+        });
+      }
     });
   }
-
   // --- OUTRAS FUNÇÕES ---
 
   openCostDialog(rental: any) {
@@ -399,8 +476,8 @@ loadData() {
   }
 
   getRentalStatus(rental: any): 'LATE' | 'TODAY' | 'OK' {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const expected = new Date(rental.expectedEndDate); expected.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const expected = new Date(rental.expectedEndDate); expected.setHours(0, 0, 0, 0);
     if (today.getTime() > expected.getTime()) return 'LATE';
     if (today.getTime() === expected.getTime()) return 'TODAY';
     return 'OK';
@@ -433,37 +510,43 @@ loadData() {
     this.editingId = rental.id;
     this.displayModal = true;
 
+    // Cria os objetos de data baseados no que veio do banco
+    const start = new Date(rental.startDate);
+    const end = new Date(rental.expectedEndDate);
+
     this.rentalForm.patchValue({
       customerId: rental.customerId,
-      dates: [new Date(rental.startDate), new Date(rental.expectedEndDate)],
+      dates: [start, end],
+
+      startTime: start, // <--- O PrimeNG é esperto e extrai a hora desse objeto Date
+
       dailyRate: rental.dailyRate,
       signalValue: rental.signalValue,
-      trailerId: rental.trailerId 
+      trailerId: rental.trailerId
     });
-    
+
     this.rentalForm.get('trailerId')?.enable();
     this.calculateTotal();
-    
+
     setTimeout(() => {
-        this.rentalForm.patchValue({ trailerId: rental.trailerId });
+      this.rentalForm.patchValue({ trailerId: rental.trailerId });
     }, 100);
   }
-
   // --- ALTERAÇÃO 1: Função Genérica para Visualizar Documentos ---
- viewDocument(base64Data: string | null) {
+  viewDocument(base64Data: string | null) {
     if (base64Data) {
       try {
         // 1. Verifica se é um Base64 puro (data:application/pdf...)
         if (base64Data.startsWith('data:')) {
           // Converte para BLOB (Arquivo na memória)
           const blob = this.base64ToBlob(base64Data);
-          
+
           // Cria uma URL temporária (blob:http://localhost...)
           this.currentBlobUrl = URL.createObjectURL(blob);
-          
+
           // Sanitiza para o Angular aceitar
           this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.currentBlobUrl);
-        
+
         } else {
           // Caso seja uma URL normal (ex: https://s3...)
           this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(base64Data);
@@ -487,11 +570,11 @@ loadData() {
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-    
+
     while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
+      u8arr[n] = bstr.charCodeAt(n);
     }
-    
+
     return new Blob([u8arr], { type: mime });
   }
 
@@ -499,7 +582,7 @@ loadData() {
   onCloseContractModal() {
     this.displayContractModal = false;
     this.sanitizedContractUrl = null;
-    
+
     if (this.currentBlobUrl) {
       URL.revokeObjectURL(this.currentBlobUrl); // Libera memória do navegador
       this.currentBlobUrl = null;
@@ -507,12 +590,66 @@ loadData() {
   }
 
   confirmPickup(rental: any) {
-  this.rentalService.startRental(rental.id).subscribe({
-    next: () => {
-      this.messageService.add({severity:'success', summary:'Sucesso', detail:'Locação iniciada!'});
-      this.loadData();
-    },
-    error: () => this.messageService.add({severity:'error', summary:'Erro', detail:'Falha ao iniciar.'})
-  });
-}
+    this.rentalService.startRental(rental.id).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Locação iniciada!' });
+        this.loadData();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha ao iniciar.' })
+    });
+  }
+
+
+  // --- LÓGICA DE MULTA POR ATRASO ---
+  calculateReturnFees() {
+    if (!this.selectedRental) return;
+
+    const formVal = this.returnForm.value;
+    if (!formVal.returnDate || !formVal.returnTime) return;
+
+    // 1. Monta a Data Real da Devolução (Junta Data + Hora do formulário)
+    const actualReturnDate = new Date(formVal.returnDate);
+    const timeComponent = new Date(formVal.returnTime);
+    actualReturnDate.setHours(timeComponent.getHours(), timeComponent.getMinutes(), 0);
+
+    // 2. Pega a Data Prevista (Do contrato)
+    const expectedDate = new Date(this.selectedRental.expectedEndDate);
+
+    // 3. Calcula a diferença em milissegundos
+    const diffMs = actualReturnDate.getTime() - expectedDate.getTime();
+
+    // Se entregou ANTES ou NA HORA, multa é zero
+    if (diffMs <= 0) {
+      this.returnForm.patchValue({ lateFee: 0 }, { emitEvent: false });
+      return;
+    }
+
+    // 4. Converte para minutos e horas
+    const diffMinutes = Math.ceil(diffMs / (1000 * 60));
+    const dailyRate = this.selectedRental.dailyRate;
+    let calculatedFee = 0;
+
+    // --- REGRAS DE NEGÓCIO ---
+
+    // REGRA 1: Tolerância de 1 hora (60 minutos)
+    if (diffMinutes <= 60) {
+      calculatedFee = 0;
+    }
+    // REGRA 2: Passou de 1h até 3h (60min a 180min) -> Cobra 1/3 da diária
+    else if (diffMinutes <= 180) {
+      calculatedFee = dailyRate / 3;
+    }
+    // REGRA 3: Passou de 3h -> Cobra novas diárias
+    else {
+      // Calcula quantas diárias extras se passaram
+      // (Subtrai 1h da tolerância para ser justo na contagem de ciclos de 24h)
+      const extraDays = Math.ceil((diffMinutes - 60) / (60 * 24));
+      calculatedFee = extraDays * dailyRate;
+    }
+
+    // Atualiza o campo no formulário (formatado com 2 casas decimais)
+    this.returnForm.patchValue({
+      lateFee: parseFloat(calculatedFee.toFixed(2))
+    }, { emitEvent: false }); // emitEvent: false evita loop infinito
+  }
 }

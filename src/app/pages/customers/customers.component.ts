@@ -7,13 +7,14 @@ import { CustomerService } from '../../services/customer.service';
 import { ImageCompressService } from '../../services/image-compress.service';
 import { PdfCompressService } from '../../services/pdf-compress.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog'; // <--- Importe aqui
-
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { InputTextareaModule } from 'primeng/inputtextarea';
 
 // PrimeNG imports
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { TableModule } from 'primeng/table'; 
+import { TableModule } from 'primeng/table';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputMaskModule } from 'primeng/inputmask';
 import { TabViewModule } from 'primeng/tabview';
@@ -28,9 +29,11 @@ import { HttpClient } from '@angular/common/http';
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule,
-    ButtonModule, DialogModule, InputTextModule, 
+    ButtonModule, DialogModule, InputTextModule,
     TableModule, DropdownModule, InputMaskModule,
-    TabViewModule, CalendarModule, ToastModule, TooltipModule,ConfirmDialogModule
+    TabViewModule, CalendarModule, ToastModule, TooltipModule, ConfirmDialogModule,
+    InputSwitchModule,
+    InputTextareaModule
   ],
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.scss'],
@@ -41,30 +44,34 @@ export class CustomersComponent implements OnInit {
   // Variáveis de visualização
   displayDocumentModal = false;
   sanitizedDocUrl: SafeResourceUrl | null = null;
-  currentBlobUrl: string | null = null; 
+  currentBlobUrl: string | null = null;
 
   customers: any[] = [];
-  
+
   // Modais
   displayModal = false;
   displayHistory = false;
   displayDocsModal = false; // Modal da Galeria (CNH + Comprovante)
-  
+
   // Modal de Contrato no Histórico
   displayContractModal = false;
   sanitizedContractUrl: SafeResourceUrl | null = null;
 
   historyData: any = null;
   selectedCustomerDocs: any = null;
-  
+
   // Edição
   isEditMode = false;
   selectedCustomerId: string | null = null;
-  
+
   customerForm: FormGroup;
-  
+
   fileNameCNH: string = '';
   fileNameProof: string = '';
+
+  // --- ADICIONE ESTAS DUAS LINHAS: ---
+  fileNameCarDoc: string = '';
+  isAdmin: boolean = true;
 
   constructor(
     private customerService: CustomerService,
@@ -90,7 +97,10 @@ export class CustomersComponent implements OnInit {
       district: [''],
       city: [''],
       cnhUrl: [''],
-      proofUrl: ['']
+      proofUrl: [''],      
+      isBlocked: [false],      // Campo de bloqueio
+      blockReason: [''],       // Motivo do bloqueio
+      carDocumentUrl: [''],    // URL do documento do carro
     });
   }
 
@@ -103,7 +113,7 @@ export class CustomersComponent implements OnInit {
   }
 
   // --- LÓGICA AUXILIAR NOVA ---
-  
+
   // Verifica se é PDF para decidir qual tag HTML usar (<object> ou <img>)
   isPdf(url: string | null): boolean {
     if (!url) return false;
@@ -120,7 +130,7 @@ export class CustomersComponent implements OnInit {
   showDialog() {
     this.isEditMode = false;
     this.selectedCustomerId = null;
-    this.customerForm.reset({ 
+    this.customerForm.reset({
       type: 'PF',
       name: '',
       document: '',
@@ -129,7 +139,7 @@ export class CustomersComponent implements OnInit {
     });
     this.fileNameCNH = '';
     this.fileNameProof = '';
-    this.displayModal = true; 
+    this.displayModal = true;
   }
 
  editCustomer(customer: any) {
@@ -137,60 +147,71 @@ export class CustomersComponent implements OnInit {
     this.isEditMode = true;
     this.selectedCustomerId = customer.id;
 
-    // --- LÓGICA DE SEPARAÇÃO DO ENDEREÇO ---
-    let street = '';
-    let number = '';
-    let district = '';
-    let city = '';
-    
-    // O formato salvo é: "Rua, Numero - Bairro - Cidade"
-    if (customer.address) {
-      // 1. Separa pelos traços
+    // --- 1. LÓGICA DE ENDEREÇO INTELIGENTE ---
+    // Tenta pegar os campos individuais primeiro (Novo Padrão do Backend)
+    let street = customer.street;
+    let number = customer.number;
+    let district = customer.district;
+    let city = customer.city;
+
+    // Se os campos individuais estiverem vazios, tenta extrair do campo antigo 'address' (Fallback para dados antigos)
+    if (!street && customer.address) {
       const parts = customer.address.split(' - ');
       
       // Parte 0: "Rua, Numero"
       if (parts.length >= 1) {
         const streetParts = parts[0].split(', ');
-        street = streetParts[0] || ''; 
-        number = streetParts[1] || ''; // Se tiver número após a vírgula
+        street = streetParts[0] || '';
+        number = streetParts[1] || ''; 
       }
-      
       // Parte 1: Bairro
       if (parts.length >= 2) {
         district = parts[1];
       }
-
       // Parte 2: Cidade
       if (parts.length >= 3) {
         city = parts[2];
       }
     }
-    // ---------------------------------------
 
+    // --- 2. PREENCHIMENTO DO FORMULÁRIO ---
     this.customerForm.patchValue({
       name: customer.name,
       type: customer.type,
       document: customer.document,
       phone: customer.phone,
       email: customer.email,
-      
-      // Preenche os campos separados
-      street: street, 
+
+      // Endereço (Usando as variáveis tratadas acima)
+      street: street,
       number: number,
       district: district,
       city: city,
-      zipCode: customer.zipCode || '', // Se você salvou o CEP separado, ok
+      zipCode: customer.zipCode || '', 
 
+      // URLs dos Documentos
       cnhUrl: customer.cnhUrl,
-      proofUrl: customer.proofUrl
+      proofUrl: customer.proofUrl,
+      carDocumentUrl: customer.carDocumentUrl, // <--- FALTAVA ISSO
+      
+      // Bloqueio
+      isBlocked: customer.isBlocked,
+      blockReason: customer.blockReason
     });
 
-    // Lógica para mostrar o nome do arquivo, se existir
+    // --- 3. ATUALIZAÇÃO VISUAL DOS BOTÕES DE ARQUIVO ---
+    
+    // CNH
     if (customer.cnhUrl) this.fileNameCNH = 'Documento Atual (Salvo)';
     else this.fileNameCNH = '';
 
+    // Comprovante
     if (customer.proofUrl) this.fileNameProof = 'Comprovante Atual (Salvo)';
     else this.fileNameProof = '';
+
+    // Doc do Carro (FALTAVA ISSO)
+    if (customer.carDocumentUrl) this.fileNameCarDoc = 'Doc. Carro Atual (Salvo)';
+    else this.fileNameCarDoc = '';
   }
 
   onSubmit() {
@@ -201,6 +222,7 @@ export class CustomersComponent implements OnInit {
       const payload = { ...formValue, address: fullAddress };
 
       if (this.isEditMode && this.selectedCustomerId) {
+        
         this.customerService.updateCustomer(this.selectedCustomerId, payload).subscribe({
           next: () => {
             this.displayModal = false;
@@ -224,7 +246,7 @@ export class CustomersComponent implements OnInit {
 
   async onFileSelected(event: any, fieldName: string) {
     const file = event.target.files[0];
-    
+
     if (file) {
       this.messageService.add({ severity: 'info', summary: 'Processando', detail: 'Otimizando arquivo...' });
 
@@ -236,16 +258,16 @@ export class CustomersComponent implements OnInit {
           const compressedPdfFile = await this.pdfCompressService.compressPdf(file);
           finalResult = await this.fileToBase64(compressedPdfFile);
         } else if (file.type.startsWith('image/')) {
-           console.log('Comprimindo Imagem...');
-           finalResult = await this.imageCompressService.compressImage(file);
+          console.log('Comprimindo Imagem...');
+          finalResult = await this.imageCompressService.compressImage(file);
         }
 
         if (finalResult) {
           this.customerForm.patchValue({ [fieldName]: finalResult });
-          
+
           if (fieldName === 'cnhUrl') this.fileNameCNH = file.name;
           if (fieldName === 'proofUrl') this.fileNameProof = file.name;
-
+          if (fieldName === 'carDocumentUrl') this.fileNameCarDoc = file.name;
           this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Arquivo pronto.' });
         }
 
@@ -271,7 +293,7 @@ export class CustomersComponent implements OnInit {
   }
 
   // --- VISUALIZADORES ---
-  
+
   // 1. Abre o modal com os documentos do cliente (Gallery)
   viewDocuments(customer: any) {
     this.selectedCustomerDocs = customer;
@@ -316,23 +338,23 @@ export class CustomersComponent implements OnInit {
         const blob = this.base64ToBlob(dataUrl);
         this.currentBlobUrl = URL.createObjectURL(blob);
         const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.currentBlobUrl);
-        
-        if(isContractModal) {
-            this.sanitizedContractUrl = safeUrl;
-            this.displayContractModal = true;
+
+        if (isContractModal) {
+          this.sanitizedContractUrl = safeUrl;
+          this.displayContractModal = true;
         } else {
-            this.sanitizedDocUrl = safeUrl;
-            this.displayDocumentModal = true;
+          this.sanitizedDocUrl = safeUrl;
+          this.displayDocumentModal = true;
         }
       } else {
         const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(dataUrl);
-        
-        if(isContractModal) {
-            this.sanitizedContractUrl = safeUrl;
-            this.displayContractModal = true;
+
+        if (isContractModal) {
+          this.sanitizedContractUrl = safeUrl;
+          this.displayContractModal = true;
         } else {
-            this.sanitizedDocUrl = safeUrl;
-            this.displayDocumentModal = true;
+          this.sanitizedDocUrl = safeUrl;
+          this.displayDocumentModal = true;
         }
       }
     } catch (e) {
@@ -368,49 +390,49 @@ export class CustomersComponent implements OnInit {
     }
   }
 
- deleteCustomer(customer: any) {
+  deleteCustomer(customer: any) {
     this.confirmationService.confirm({
-        message: 'Tem certeza que deseja excluir ' + customer.name + '?',
-        header: 'Confirmar Exclusão',
-        icon: 'pi pi-exclamation-triangle',
-        acceptLabel: 'Sim',
-        rejectLabel: 'Não',
-        acceptButtonStyleClass: 'p-button-danger p-button-text',
-        rejectButtonStyleClass: 'p-button-text',
-        accept: () => {
-            // --- AQUI ESTÁ A LÓGICA DE APAGAR ---
-            this.customerService.delete(customer.id).subscribe({
-                next: () => {
-                    // 1. Mostra mensagem de sucesso
-                    this.messageService.add({
-                        severity: 'success', 
-                        summary: 'Sucesso', 
-                        detail: 'Registro excluído com sucesso', 
-                        life: 3000
-                    });
-
-                    // 2. ATUALIZA A TABELA NA TELA
-                    // Opção A: Recarregar tudo do banco
-                     this.loadCustomers(); 
-                    
-                    // Opção B (Mais rápida): Remover apenas o item da lista localmente
-                    this.customers = this.customers.filter(c => c.id !== customer.id);
-                },
-                error: (err) => {
-                    // 3. Trata erro (ex: não pode apagar porque tem aluguel)
-                    this.messageService.add({
-                        severity: 'error', 
-                        summary: 'Erro', 
-                        detail: err.error.message || 'Erro ao excluir registro', // Pega a msg do backend
-                        life: 4000
-                    });
-                }
+      message: 'Tem certeza que deseja excluir ' + customer.name + '?',
+      header: 'Confirmar Exclusão',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      acceptButtonStyleClass: 'p-button-danger p-button-text',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        // --- AQUI ESTÁ A LÓGICA DE APAGAR ---
+        this.customerService.delete(customer.id).subscribe({
+          next: () => {
+            // 1. Mostra mensagem de sucesso
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso',
+              detail: 'Registro excluído com sucesso',
+              life: 3000
             });
-        }
-    });
-}
 
-buscarCep() {
+            // 2. ATUALIZA A TABELA NA TELA
+            // Opção A: Recarregar tudo do banco
+            this.loadCustomers();
+
+            // Opção B (Mais rápida): Remover apenas o item da lista localmente
+            this.customers = this.customers.filter(c => c.id !== customer.id);
+          },
+          error: (err) => {
+            // 3. Trata erro (ex: não pode apagar porque tem aluguel)
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erro',
+              detail: err.error.message || 'Erro ao excluir registro', // Pega a msg do backend
+              life: 4000
+            });
+          }
+        });
+      }
+    });
+  }
+
+  buscarCep() {
     // 1. Pega o valor do CEP do formulário
     let cep = this.customerForm.get('zipCode')?.value;
 
@@ -420,11 +442,11 @@ buscarCep() {
 
       // 3. Verifica se tem 8 dígitos
       if (cep.length === 8) {
-        
+
         // 4. Chama a API do ViaCEP
         this.http.get<any>(`https://viacep.com.br/ws/${cep}/json/`)
           .subscribe(dados => {
-            
+
             if (!dados.erro) {
               // 5. Preenche o formulário automaticamente
               this.customerForm.patchValue({
@@ -438,7 +460,7 @@ buscarCep() {
               // document.getElementById('numeroInput')?.focus();
             } else {
               // CEP não encontrado
-              this.messageService.add({severity:'warn', summary:'Atenção', detail:'CEP não encontrado.'});
+              this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'CEP não encontrado.' });
             }
           });
       }

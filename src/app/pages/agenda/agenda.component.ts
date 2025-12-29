@@ -150,6 +150,12 @@ export class AgendaComponent implements OnInit {
   onSubmit() {
     if (this.reservationForm.valid) {
       const val = this.reservationForm.value;
+
+      const selectedCustomer = this.customers.find(c => c.id === val.customerId);
+      if (selectedCustomer?.isBlocked) {
+         alert(`ERRO: O cliente ${selectedCustomer.name} está bloqueado.\nMotivo: ${selectedCustomer.blockReason || 'Não informado'}`);
+         return; // Para tudo aqui
+      }
       
       if (!val.dates || !val.dates[0] || !val.dates[1]) {
         alert('Selecione a data de retirada e devolução.');
