@@ -214,7 +214,7 @@ export class CustomersComponent implements OnInit {
     else this.fileNameCarDoc = '';
   }
 
-  onSubmit() {
+  onSubmit() {    
     if (this.customerForm.valid) {
       const formValue = this.customerForm.value;
       const fullAddress = `${formValue.street || ''}, ${formValue.number || ''} - ${formValue.district || ''} - ${formValue.city || ''}`;
