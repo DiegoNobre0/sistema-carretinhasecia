@@ -194,7 +194,8 @@
             </div>
             <div class="field">
               <label>CEP</label>
-              <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem" (onBlur)="buscarCep()"></p-inputMask>
+              <p-inputMask mask="99999-999" formControlName="zipCode" styleClass="w-10rem"
+                (onBlur)="buscarCep()"></p-inputMask>
             </div>
             <div class="form-row flex gap-3">
               <div class="field" style="flex: 3;">
@@ -232,6 +233,45 @@
         </p-tabPanel>
       </p-tabView>
 
+      <div class="field-checkbox mt-4 surface-ground p-3 border-round border-gray-200 flex flex-column">
+  
+  <div class="flex align-items-center justify-content-between w-full">
+    <div class="flex flex-column">
+      <label class="font-bold text-gray-800">Cartão Fidelidade</label>
+      <small class="text-gray-500">
+        Ativar programa de pontos? (10 locações = R$ 80 desc)
+      </small>
+    </div>
+    <p-inputSwitch formControlName="hasLoyaltyCard"></p-inputSwitch>
+  </div>
+
+  <div *ngIf="customerForm.get('hasLoyaltyCard')?.value" 
+       class="w-full mt-3 pt-3 border-top-1 border-gray-300 animation-fade-in">
+    
+    <div class="flex align-items-center justify-content-between">
+      <div class="flex flex-column">
+         <label class="font-bold text-sm">Saldo de Pontos Manual</label>
+         <small class="text-gray-500">Ajuste apenas se necessário.</small>
+      </div>
+
+      <p-inputNumber formControlName="loyaltyRentalsCount" 
+        [showButtons]="true" 
+        buttonLayout="horizontal"
+        [min]="0" 
+        [max]="10" 
+        incrementButtonIcon="pi pi-plus" 
+        decrementButtonIcon="pi pi-minus"
+        inputStyleClass="w-3rem text-center font-bold">
+      </p-inputNumber>
+    </div>
+    
+  </div>
+
+</div>
+
+
+
+
       <div class="field border-1 border-gray-700 p-3 border-round mt-3 bg-gray-900">
         <div class="flex align-items-center gap-2">
           <p-inputSwitch formControlName="isBlocked" [disabled]="!isAdmin"></p-inputSwitch>
@@ -252,7 +292,7 @@
       </div>
     </form>
   </p-dialog>
-<p-dialog header="Documentos" [(visible)]="displayDocsModal" [modal]="true" [style]="{width: '800px'}"
+  <p-dialog header="Documentos" [(visible)]="displayDocsModal" [modal]="true" [style]="{width: '800px'}"
     [maximizable]="true">
 
     <div class="grid documents-view" *ngIf="selectedCustomerDocs">
@@ -333,8 +373,9 @@
 
         <div *ngIf="selectedCustomerDocs.carDocumentUrl; else noCarDoc"
           class="w-full h-full flex flex-column align-items-center">
-          
-          <div *ngIf="isPdf(selectedCustomerDocs.carDocumentUrl); else isImageCarDoc" class="h-20rem w-full" style="max-width: 500px;">
+
+          <div *ngIf="isPdf(selectedCustomerDocs.carDocumentUrl); else isImageCarDoc" class="h-20rem w-full"
+            style="max-width: 500px;">
             <object [data]="getSafeUrl(selectedCustomerDocs.carDocumentUrl)" type="application/pdf" width="100%"
               height="100%" class="border-round bg-gray-900">
               <p class="text-center p-3">Seu navegador não mostra PDF. <a [href]="selectedCustomerDocs.carDocumentUrl"
@@ -374,27 +415,47 @@
   <p-dialog header="Histórico e Performance" [(visible)]="displayHistory" [modal]="true" [style]="{width: '850px'}"
     [draggable]="false" [resizable]="false">
     <div *ngIf="historyData" class="history-content">
-
-      <div class="stats-grid grid mb-4">
-        <div class="col-6">
-          <div class="stat-card theme-green">
-            <div class="icon-wrapper"><i class="pi pi-wallet"></i></div>
-            <div class="content">
-              <span class="label">Total Investido</span>
-              <span class="value">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-6">
-          <div class="stat-card theme-blue">
-            <div class="icon-wrapper"><i class="pi pi-shopping-bag"></i></div>
-            <div class="content">
-              <span class="label">Locações Realizadas</span>
-              <span class="value">{{ historyData.stats.totalRentals }}</span>
-            </div>
-          </div>
-        </div>
+<div class="stats-grid grid mb-4">
+  
+  <div class="col-12 md:col-4">
+    <div class="stat-card theme-green h-full">
+      <div class="icon-wrapper"><i class="pi pi-wallet"></i></div>
+      <div class="content">
+        <span class="label">Total Investido</span>
+        <span class="value">R$ {{ historyData.stats.totalSpent | number:'1.2-2' }}</span>
       </div>
+    </div>
+  </div>
+
+  <div class="col-12 md:col-4">
+    <div class="stat-card theme-blue h-full">
+      <div class="icon-wrapper"><i class="pi pi-shopping-bag"></i></div>
+      <div class="content">
+        <span class="label">Locações Realizadas</span>
+        <span class="value">{{ historyData.stats.totalRentals }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 md:col-4" *ngIf="selectedHistoryCustomer?.hasLoyaltyCard">
+    <div class="stat-card h-full surface-card border-1 border-yellow-500 border-round p-3 flex align-items-center gap-3 shadow-2">
+      <div class="flex align-items-center justify-content-center bg-yellow-100 text-yellow-600 border-circle w-3rem h-3rem">
+        <i class="pi pi-star-fill text-xl"></i>
+      </div>
+      <div class="flex flex-column">
+        <span class="text-gray-500 font-medium text-sm">Pontos Fidelidade</span>
+        <div class="flex align-items-baseline gap-1">
+          <span class="text-2xl font-bold text-gray-800">{{ selectedHistoryCustomer?.loyaltyRentalsCount }}</span>
+          <span class="text-gray-400 text-sm">/ 10</span>
+        </div>
+        <small class="text-yellow-600 font-bold text-xs mt-1" *ngIf="selectedHistoryCustomer?.loyaltyRentalsCount >= 10">
+          🎉 Próxima grátis/desconto!
+        </small>
+      </div>
+    </div>
+  </div>
+
+</div>
 
       <div class="mt-4">
         <h4 class="section-title">Detalhamento de Contratos</h4>

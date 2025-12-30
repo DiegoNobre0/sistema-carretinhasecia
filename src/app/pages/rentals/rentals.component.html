@@ -80,7 +80,7 @@
           </div>
 
           <div class="card-body">
-       <div class="vehicle-block">
+            <div class="vehicle-block">
               <div class="vehicle-row">
                 <span class="label">Veículo</span>
                 <span class="value highlight">{{ rental.trailer?.plate }}</span>
@@ -89,12 +89,12 @@
                 <span class="label">Modelo</span>
                 <span class="value text-gray-400">{{ rental.trailer?.model }}</span>
               </div>
-              
+
               <div class="vehicle-row mt-2">
                 <span class="label">Retirada</span>
                 <span class="value">{{ rental.startDate | date:'dd/MM/yy HH:mm' }}</span>
               </div>
-              
+
               <div class="vehicle-row">
                 <span class="label">Devolução</span>
                 <span class="value">{{ rental.expectedEndDate | date:'dd/MM/yy HH:mm' }}</span>
@@ -122,20 +122,6 @@
                   <span>Valor Base</span>
                   <span>R$ {{ getBaseValue(rental) | number:'1.2-2' }}</span>
                 </div>
-
-                <!-- <div class="row">
-                  <span>Extras / Multas</span>
-                  <div class="flex align-items-center gap-2">
-                    <span class="text-yellow-500 font-bold" *ngIf="rental.extraCosts > 0">
-                      + R$ {{ rental.extraCosts | number:'1.2-2' }}
-                    </span>
-                    <span class="text-gray-600" *ngIf="rental.extraCosts === 0">--</span>
-
-                    <button class="btn-add" (click)="openCostDialog(rental)" pTooltip="Adicionar Custo Extra">
-                      <i class="pi pi-plus" style="font-size: 0.7rem"></i> Add
-                    </button>
-                  </div>
-                </div> -->
 
                 <div class="row total">
                   <span>TOTAL</span>
@@ -219,11 +205,18 @@
             <label>Cliente</label>
             <p-dropdown [options]="customers" optionLabel="name" optionValue="id" formControlName="customerId"
               placeholder="Selecione..." [filter]="true" filterBy="name,document" appendTo="body"
-              (onChange)="calculateTotal()" styleClass="w-full" optionDisabled="isBlocked"> <ng-template let-customer
-                pTemplate="selectedItem">
+              (onChange)="calculateTotal()" styleClass="w-full" optionDisabled="isBlocked">
+
+              <ng-template let-customer pTemplate="selectedItem">
                 <div class="flex align-items-center gap-2" *ngIf="customer">
                   <span class="font-bold">{{ customer.name }}</span>
                   <span class="text-sm text-gray-400">({{ customer.document }})</span>
+
+                  <div *ngIf="customer.hasLoyaltyCard" class="flex align-items-center gap-1 px-2 py-0 border-round"
+                    [ngClass]="customer.loyaltyRentalsCount >= 10 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'">
+                    <i class="pi pi-star-fill text-xs"></i>
+                    <span class="text-xs font-bold">{{ customer.loyaltyRentalsCount }}/10</span>
+                  </div>
                 </div>
               </ng-template>
 
@@ -233,10 +226,17 @@
                   <div class="flex align-items-center justify-content-between">
                     <span class="font-bold text-white">{{ customer.name }}</span>
 
-                    <span *ngIf="customer.isBlocked"
-                      class="text-red-500 text-xs font-bold border-1 border-red-500 px-2 border-round">
-                      <i class="pi pi-lock"></i> BLOQUEADO
-                    </span>
+                    <div class="flex align-items-center gap-2">
+                      <span *ngIf="customer.hasLoyaltyCard" class="text-xs font-bold flex align-items-center gap-1"
+                        [ngClass]="customer.loyaltyRentalsCount >= 10 ? 'text-green-400' : 'text-yellow-500'">
+                        <i class="pi pi-star-fill"></i> {{ customer.loyaltyRentalsCount }}/10
+                      </span>
+
+                      <span *ngIf="customer.isBlocked"
+                        class="text-red-500 text-xs font-bold border-1 border-red-500 px-2 border-round">
+                        <i class="pi pi-lock"></i> BLOQUEADO
+                      </span>
+                    </div>
                   </div>
 
                   <div class="flex align-items-center gap-2 text-gray-400 text-sm">
@@ -246,7 +246,6 @@
                   <small *ngIf="customer.isBlocked && customer.blockReason" class="text-red-400">
                     Motivo: {{ customer.blockReason }}
                   </small>
-
                 </div>
               </ng-template>
 
@@ -323,12 +322,31 @@
               <div class="date-box"><span class="label">DEVOLUÇÃO</span><span class="value">{{ rentalForm.value.dates[1]
                   | date:'dd/MM/yy' }}</span></div>
             </div>
-            <div class="total-row"><span>TOTAL ({{ diasCalculados }} dias)</span><strong class="text-green-400">R$ {{
-                totalCalculado | number:'1.2-2' }}</strong></div>
+
+            <div class="w-full mt-3 border-top-1 border-gray-700 pt-2" *ngIf="loyaltyDiscount > 0">
+              <div class="flex justify-content-between mb-1">
+                <span class="text-gray-400 text-sm">Subtotal</span>
+                <span class="text-gray-400 text-sm line-through">R$ {{ (totalCalculado + loyaltyDiscount) |
+                  number:'1.2-2' }}</span>
+              </div>
+              <div class="flex justify-content-between align-items-center">
+                <span class="text-green-400 font-bold text-sm flex align-items-center gap-1">
+                  <i class="pi pi-star-fill"></i> DESCONTO FIDELIDADE
+                </span>
+                <span class="text-green-400 font-bold">- R$ {{ loyaltyDiscount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+
+            <div class="total-row mt-2">
+              <span>TOTAL ({{ diasCalculados }} dias)</span>
+              <strong class="text-xl" [ngClass]="loyaltyDiscount > 0 ? 'text-green-400' : 'text-white'">
+                R$ {{ totalCalculado | number:'1.2-2' }}
+              </strong>
+            </div>
+
             <div class="docs-actions">
               <button pButton label="Contrato" icon="pi pi-file-pdf"
-                class="p-button-outlined p-button-sm p-button-secondary"
-                (click)="generateDraftDoc('CONTRACT')"></button>
+                class="p-button-outlined p-button-sm p-button-secondary" (click)="generateDraftDoc('CONTRACT')"></button>
               <button pButton label="Promissória" icon="pi pi-wallet"
                 class="p-button-outlined p-button-sm p-button-secondary"
                 (click)="generateDraftDoc('PROMISSORY')"></button>

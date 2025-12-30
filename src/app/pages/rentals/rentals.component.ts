@@ -61,6 +61,9 @@ export class RentalsComponent implements OnInit {
   rentalForm: FormGroup;
   totalCalculado: number = 0;
   diasCalculados: number = 0;
+  
+  // --- FIDELIDADE ---
+  loyaltyDiscount: number = 0; // Armazena o valor do desconto visual
 
   // Resumo Visual
   selectedCustomerObj: any = null;
@@ -69,8 +72,8 @@ export class RentalsComponent implements OnInit {
   // --- MODAL DE DEVOLUÇÃO (FINALIZAÇÃO) ---
   displayReturnModal = false;
   returnForm: FormGroup;
-  selectedRental: any = null; // A locação sendo finalizada
-  returnFile: File | null = null; // O arquivo assinado para upload
+  selectedRental: any = null; 
+  returnFile: File | null = null; 
 
   // --- MODAL DE CUSTOS EXTRAS ---
   displayCostModal = false;
@@ -123,21 +126,13 @@ export class RentalsComponent implements OnInit {
     // Locações
     this.rentalService.getRentals().subscribe({
       next: (data) => {
-
-        // --- MUDANÇA AQUI: PEGA 'OPEN' E 'RESERVED' ---
         this.activeRentals = data.filter(r => r.status === 'OPEN' || r.status === 'RESERVED');
-
-        // Histórico (Fechado ou Cancelado)
         this.closedRentals = data.filter(r => r.status === 'CLOSED' || r.status === 'CANCELED');
-
-        // A lista futureRentals não é mais necessária para a tela, 
-        // mas se quiser manter por garantia, pode deixar:
         this.futureRentals = data.filter(r => r.status === 'RESERVED');
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar locações.' })
     });
 
-    // ... restante do código (clientes e trailers) continua igual
     this.customerService.getCustomers().subscribe(data => this.customers = data);
     this.trailerService.getTrailers().subscribe(data => {
       this.trailers = data.filter(t => t.status !== 'MAINTENANCE');
@@ -148,6 +143,9 @@ export class RentalsComponent implements OnInit {
     this.displayModal = true;
     this.isEditMode = false;
     this.editingId = null;
+
+    // Reseta fidelidade
+    this.loyaltyDiscount = 0;
 
     // Reseta e define a hora padrão como "Agora"
     this.rentalForm.reset({
@@ -172,7 +170,6 @@ export class RentalsComponent implements OnInit {
     if (trailerId) {
       this.selectedTrailerObj = this.trailers.find(t => t.id === trailerId);
 
-      // Verifica datas ocupadas no backend (se implementado)
       // @ts-ignore
       if (this.trailerService['getBusyDates']) {
         // @ts-ignore
@@ -195,21 +192,23 @@ export class RentalsComponent implements OnInit {
     }
   }
 
+  // --- O CORAÇÃO DO CÁLCULO FINANCEIRO ---
   calculateTotal() {
     const formVal = this.rentalForm.value;
 
+    // 1. Validação de Bloqueio
     if (this.selectedCustomerObj?.isBlocked) {
       this.messageService.add({
         severity: 'error',
         summary: 'Bloqueado',
         detail: `Este cliente está bloqueado: ${this.selectedCustomerObj.blockReason || 'Sem motivo'}`
       });
-      // Limpa a seleção
       this.rentalForm.patchValue({ customerId: null });
       this.selectedCustomerObj = null;
       return;
     }
 
+    // 2. Atualiza Objetos Selecionados
     if (formVal.customerId) {
       this.selectedCustomerObj = this.customers.find(c => c.id === formVal.customerId);
     }
@@ -217,23 +216,40 @@ export class RentalsComponent implements OnInit {
       this.selectedTrailerObj = this.trailers.find(t => t.id === formVal.trailerId);
     }
 
+    // 3. Reseta valores temporários
+    this.loyaltyDiscount = 0;
     const dates = formVal.dates;
     const dailyRate = formVal.dailyRate;
 
+    // 4. Cálculos
     if (dates && dates[0] && dates[1] && dailyRate) {
       const diff = Math.abs(dates[1].getTime() - dates[0].getTime());
       const days = Math.ceil(diff / (1000 * 60 * 60 * 24)) || 1;
       this.diasCalculados = days;
-      this.totalCalculado = days * dailyRate;
+      
+      // Valor Bruto (Dias * Diária)
+      let grossTotal = days * dailyRate;
+
+      // --- LÓGICA FIDELIDADE ---
+      // Se tem cartão E pontos >= 10, ganha 80 reais de desconto
+      if (this.selectedCustomerObj?.hasLoyaltyCard && this.selectedCustomerObj?.loyaltyRentalsCount >= 10) {
+          this.loyaltyDiscount = 80.00;
+      }
+
+      // Aplica desconto (sem deixar negativo)
+      this.totalCalculado = Math.max(0, grossTotal - this.loyaltyDiscount);
+
     } else {
       this.totalCalculado = 0;
+      this.diasCalculados = 0;
     }
   }
 
-  onSubmit() {
+onSubmit() {
     if (this.rentalForm.valid) {
       const val = this.rentalForm.value;
 
+      // 1. Ajuste de Datas e Horas
       const timeComponent = new Date(val.startTime);
 
       const startDateBase = new Date(val.dates[0]);
@@ -242,40 +258,67 @@ export class RentalsComponent implements OnInit {
       const endDateBase = new Date(val.dates[1]);
       endDateBase.setHours(timeComponent.getHours(), timeComponent.getMinutes(), 0);
 
+      // 2. Define Status baseado no Checkbox
       const rentalStatus = val.startNow ? 'OPEN' : 'RESERVED';
 
       const payload = {
         customerId: val.customerId,
         trailerId: val.trailerId,
-
-        startDate: startDateBase, // <--- Envia a data COM a hora correta
-        expectedEndDate: endDateBase, // A data prevista de fim pode ficar 00:00 ou fim do dia, conforme sua regra
-
+        startDate: startDateBase,
+        expectedEndDate: endDateBase,
         dailyRate: val.dailyRate,
         signalValue: val.signalValue,
-        totalValue: this.totalCalculado,
-        status: rentalStatus
+        totalValue: this.totalCalculado, // Valor já com desconto calculado
+        status: rentalStatus             // <--- Importante: Envia OPEN ou RESERVED
       };
+
       console.log('Enviando Payload:', payload);
+
+      // --- FUNÇÕES AUXILIARES PARA EVITAR REPETIÇÃO DE CÓDIGO ---
+
+      const onSuccess = () => {
+        this.displayModal = false;
+        this.loadData();
+        this.messageService.add({ 
+            severity: 'success', 
+            summary: 'Sucesso', 
+            detail: this.isEditMode ? 'Locação atualizada!' : 'Locação realizada com sucesso!' 
+        });
+      };
+
+      const onError = (err: any) => {
+        // Captura a mensagem de erro vinda do backend
+        const msg = err.error?.error || err.error?.message || 'Erro desconhecido';
+
+        // LÓGICA ESPECIAL: Se o erro for sobre disponibilidade física (backend bloqueou OPEN)
+        if (msg.includes("não está na loja") || msg.includes("alugada")) {
+           this.messageService.add({ 
+              severity: 'warn', 
+              summary: 'Veículo Indisponível', 
+              detail: 'Este veículo ainda não retornou. Desmarque "Retirada Imediata" para criar apenas uma Reserva.' 
+           });
+        } else {
+           // Erros genéricos (choque de datas, erro de banco, etc)
+           this.messageService.add({ severity: 'error', summary: 'Erro', detail: msg });
+        }
+      };
+
+      // --- EXECUÇÃO ---
+
       if (this.isEditMode && this.editingId) {
         this.rentalService.updateRental(this.editingId, payload).subscribe({
-          next: () => {
-            this.displayModal = false;
-            this.loadData();
-            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Locação atualizada!' });
-          },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao atualizar.' })
+          next: onSuccess,
+          error: onError
         });
       } else {
         this.rentalService.createRental(payload).subscribe({
-          next: () => {
-            this.displayModal = false;
-            this.loadData();
-            this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Locação realizada!' });
-          },
-          error: (err) => this.messageService.add({ severity: 'error', summary: 'Erro', detail: err.error?.error || 'Erro desconhecido' })
+          next: onSuccess,
+          error: onError
         });
       }
+    } else {
+        // Feedback visual se o usuário tentar salvar com formulário inválido
+        this.messageService.add({ severity: 'warn', summary: 'Atenção', detail: 'Preencha todos os campos obrigatórios.' });
     }
   }
 
@@ -319,7 +362,6 @@ export class RentalsComponent implements OnInit {
     this.displayReturnModal = true;
     this.returnFile = null;
 
-    // Define data/hora atuais como sugestão de devolução
     const now = new Date();
 
     this.returnForm.reset({
@@ -332,14 +374,12 @@ export class RentalsComponent implements OnInit {
       cleaningFee: 0
     });
 
-    // --- ADICIONE ISTO: Ouve mudanças para recalcular a multa em tempo real ---
     this.returnForm.get('returnDate')?.valueChanges.subscribe(() => this.calculateReturnFees());
     this.returnForm.get('returnTime')?.valueChanges.subscribe(() => this.calculateReturnFees());
 
-    // Roda uma vez inicial para já calcular se abriu o modal atrasado
     setTimeout(() => this.calculateReturnFees(), 100);
   }
-  // PASSO 1: Apenas Baixar o PDF
+ 
   generateReturnOnly() {
     if (!this.selectedRental) return;
 
@@ -351,7 +391,6 @@ export class RentalsComponent implements OnInit {
     this.messageService.add({ severity: 'info', summary: 'Download', detail: 'Imprima, assine e anexe.' });
   }
 
-  // PASSO 2: Selecionar o Arquivo Assinado
   onReturnFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -359,9 +398,7 @@ export class RentalsComponent implements OnInit {
     }
   }
 
-  // --- ALTERAÇÃO 2: Upload na Finalização ---
   finalCheckAndFinish() {
-    debugger
     if (!this.selectedRental || !this.returnFile) return;
 
     this.messageService.add({ severity: 'info', summary: 'Aguarde', detail: 'Salvando termo e finalizando...' });
@@ -369,23 +406,19 @@ export class RentalsComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = (e: any) => {
       const base64File = e.target.result;
-
-      // AQUI MUDOU: Chama uploadReturnTerm em vez de uploadContract
       this.rentalService.uploadReturnTerm(this.selectedRental.id, base64File).subscribe({
         next: () => {
-          this.finishRentalOnBackend(); // Segue para fechar a locação
+          this.finishRentalOnBackend();
         },
         error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Falha no upload do termo.' })
       });
     };
     reader.readAsDataURL(this.returnFile);
   }
-  // PASSO 4: Mudar Status no Banco
- finishRentalOnBackend() {
-    // Validação básica
+  
+  finishRentalOnBackend() {
     if (!this.selectedRental || !this.returnForm.value.returnDate) return;
 
-    // 1. MESCLAR DATA E HORA DE DEVOLUÇÃO (Crucial para o banco salvar o horário certo)
     const formVal = this.returnForm.value;
     const finalEndDate = new Date(formVal.returnDate);
     
@@ -394,14 +427,8 @@ export class RentalsComponent implements OnInit {
       finalEndDate.setHours(time.getHours(), time.getMinutes(), 0);
     }
 
-    // 2. CALCULAR O VALOR FINAL REAL
-    // Pega o valor original da locação (Base)
     const baseValue = this.selectedRental.totalValue || 0;
-    
-    // Soma os extras do formulário
     const extras = (formVal.lateFee || 0) + (formVal.cleaningFee || 0) + (formVal.damageCost || 0);
-    
-    // Valor final a ser salvo no banco (Base + Extras)
     const finalTotalValue = baseValue + extras;
 
     const payload = {
@@ -409,7 +436,7 @@ export class RentalsComponent implements OnInit {
       totalValue: finalTotalValue 
     };
 
-    console.log('Enviando Finalização:', payload); // <--- AJUDA NO DEBUG
+    console.log('Enviando Finalização:', payload); 
 
     this.rentalService.finishRental(this.selectedRental.id, payload).subscribe({
       next: () => {
@@ -418,11 +445,8 @@ export class RentalsComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Concluído', detail: 'Locação finalizada com sucesso!' });
       },
       error: (err) => {
-        console.error('Erro backend:', err); // <--- OLHE ISSO NO CONSOLE DO NAVEGADOR
-        
-        // Tenta mostrar a mensagem específica do backend, se houver
+        console.error('Erro backend:', err);
         const msgErro = err.error?.message || 'Falha ao finalizar no sistema';
-        
         this.messageService.add({ 
           severity: 'error', 
           summary: 'Erro', 
@@ -431,8 +455,7 @@ export class RentalsComponent implements OnInit {
       }
     });
   }
-  // --- OUTRAS FUNÇÕES ---
-
+  
   openCostDialog(rental: any) {
     this.editingRental = rental;
     this.costInput = rental.extraCosts || 0;
@@ -452,7 +475,6 @@ export class RentalsComponent implements OnInit {
     }
   }
 
-  // --- HELPERS ---
   getBaseValue(rental: any): number {
     return rental.totalValue - (rental.extraCosts || 0);
   }
@@ -510,16 +532,13 @@ export class RentalsComponent implements OnInit {
     this.editingId = rental.id;
     this.displayModal = true;
 
-    // Cria os objetos de data baseados no que veio do banco
     const start = new Date(rental.startDate);
     const end = new Date(rental.expectedEndDate);
 
     this.rentalForm.patchValue({
       customerId: rental.customerId,
       dates: [start, end],
-
-      startTime: start, // <--- O PrimeNG é esperto e extrai a hora desse objeto Date
-
+      startTime: start, 
       dailyRate: rental.dailyRate,
       signalValue: rental.signalValue,
       trailerId: rental.trailerId
@@ -532,28 +551,18 @@ export class RentalsComponent implements OnInit {
       this.rentalForm.patchValue({ trailerId: rental.trailerId });
     }, 100);
   }
-  // --- ALTERAÇÃO 1: Função Genérica para Visualizar Documentos ---
+ 
   viewDocument(base64Data: string | null) {
     if (base64Data) {
       try {
-        // 1. Verifica se é um Base64 puro (data:application/pdf...)
         if (base64Data.startsWith('data:')) {
-          // Converte para BLOB (Arquivo na memória)
           const blob = this.base64ToBlob(base64Data);
-
-          // Cria uma URL temporária (blob:http://localhost...)
           this.currentBlobUrl = URL.createObjectURL(blob);
-
-          // Sanitiza para o Angular aceitar
           this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.currentBlobUrl);
-
         } else {
-          // Caso seja uma URL normal (ex: https://s3...)
           this.sanitizedContractUrl = this.sanitizer.bypassSecurityTrustResourceUrl(base64Data);
         }
-
         this.displayContractModal = true;
-
       } catch (e) {
         console.error('Erro ao processar PDF:', e);
         this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Arquivo corrompido ou inválido.' });
@@ -563,28 +572,23 @@ export class RentalsComponent implements OnInit {
     }
   }
 
-  // Função Mágica: Converte a string gigante em um arquivo Blob leve
   base64ToBlob(base64: string) {
     const arr = base64.split(',');
     const mime = arr[0].match(/:(.*?);/)![1];
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-
     while (n--) {
       u8arr[n] = bstr.charCodeAt(n);
     }
-
     return new Blob([u8arr], { type: mime });
   }
 
-  // Limpeza de memória quando fechar o modal
   onCloseContractModal() {
     this.displayContractModal = false;
     this.sanitizedContractUrl = null;
-
     if (this.currentBlobUrl) {
-      URL.revokeObjectURL(this.currentBlobUrl); // Libera memória do navegador
+      URL.revokeObjectURL(this.currentBlobUrl); 
       this.currentBlobUrl = null;
     }
   }
@@ -599,57 +603,42 @@ export class RentalsComponent implements OnInit {
     });
   }
 
-
-  // --- LÓGICA DE MULTA POR ATRASO ---
   calculateReturnFees() {
     if (!this.selectedRental) return;
 
     const formVal = this.returnForm.value;
     if (!formVal.returnDate || !formVal.returnTime) return;
 
-    // 1. Monta a Data Real da Devolução (Junta Data + Hora do formulário)
     const actualReturnDate = new Date(formVal.returnDate);
     const timeComponent = new Date(formVal.returnTime);
     actualReturnDate.setHours(timeComponent.getHours(), timeComponent.getMinutes(), 0);
 
-    // 2. Pega a Data Prevista (Do contrato)
     const expectedDate = new Date(this.selectedRental.expectedEndDate);
 
-    // 3. Calcula a diferença em milissegundos
     const diffMs = actualReturnDate.getTime() - expectedDate.getTime();
 
-    // Se entregou ANTES ou NA HORA, multa é zero
     if (diffMs <= 0) {
       this.returnForm.patchValue({ lateFee: 0 }, { emitEvent: false });
       return;
     }
 
-    // 4. Converte para minutos e horas
     const diffMinutes = Math.ceil(diffMs / (1000 * 60));
     const dailyRate = this.selectedRental.dailyRate;
     let calculatedFee = 0;
 
-    // --- REGRAS DE NEGÓCIO ---
-
-    // REGRA 1: Tolerância de 1 hora (60 minutos)
     if (diffMinutes <= 60) {
       calculatedFee = 0;
     }
-    // REGRA 2: Passou de 1h até 3h (60min a 180min) -> Cobra 1/3 da diária
     else if (diffMinutes <= 180) {
       calculatedFee = dailyRate / 3;
     }
-    // REGRA 3: Passou de 3h -> Cobra novas diárias
     else {
-      // Calcula quantas diárias extras se passaram
-      // (Subtrai 1h da tolerância para ser justo na contagem de ciclos de 24h)
       const extraDays = Math.ceil((diffMinutes - 60) / (60 * 24));
       calculatedFee = extraDays * dailyRate;
     }
 
-    // Atualiza o campo no formulário (formatado com 2 casas decimais)
     this.returnForm.patchValue({
       lateFee: parseFloat(calculatedFee.toFixed(2))
-    }, { emitEvent: false }); // emitEvent: false evita loop infinito
+    }, { emitEvent: false });
   }
 }

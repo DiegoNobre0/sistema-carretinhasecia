@@ -9,6 +9,7 @@ import { PdfCompressService } from '../../services/pdf-compress.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog'; // <--- Importe aqui
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 // PrimeNG imports
 import { ButtonModule } from 'primeng/button';
@@ -33,7 +34,7 @@ import { HttpClient } from '@angular/common/http';
     TableModule, DropdownModule, InputMaskModule,
     TabViewModule, CalendarModule, ToastModule, TooltipModule, ConfirmDialogModule,
     InputSwitchModule,
-    InputTextareaModule
+    InputTextareaModule, InputNumberModule
   ],
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.scss'],
@@ -56,6 +57,7 @@ export class CustomersComponent implements OnInit {
   // Modal de Contrato no Histórico
   displayContractModal = false;
   sanitizedContractUrl: SafeResourceUrl | null = null;
+  selectedHistoryCustomer: any = null;
 
   historyData: any = null;
   selectedCustomerDocs: any = null;
@@ -97,10 +99,12 @@ export class CustomersComponent implements OnInit {
       district: [''],
       city: [''],
       cnhUrl: [''],
-      proofUrl: [''],      
+      proofUrl: [''],
       isBlocked: [false],      // Campo de bloqueio
       blockReason: [''],       // Motivo do bloqueio
       carDocumentUrl: [''],    // URL do documento do carro
+      hasLoyaltyCard: [false], // Tem que ser BOOLEAN
+      loyaltyRentalsCount: [0]
     });
   }
 
@@ -142,7 +146,7 @@ export class CustomersComponent implements OnInit {
     this.displayModal = true;
   }
 
- editCustomer(customer: any) {
+  editCustomer(customer: any) {
     this.displayModal = true;
     this.isEditMode = true;
     this.selectedCustomerId = customer.id;
@@ -157,12 +161,12 @@ export class CustomersComponent implements OnInit {
     // Se os campos individuais estiverem vazios, tenta extrair do campo antigo 'address' (Fallback para dados antigos)
     if (!street && customer.address) {
       const parts = customer.address.split(' - ');
-      
+
       // Parte 0: "Rua, Numero"
       if (parts.length >= 1) {
         const streetParts = parts[0].split(', ');
         street = streetParts[0] || '';
-        number = streetParts[1] || ''; 
+        number = streetParts[1] || '';
       }
       // Parte 1: Bairro
       if (parts.length >= 2) {
@@ -187,20 +191,20 @@ export class CustomersComponent implements OnInit {
       number: number,
       district: district,
       city: city,
-      zipCode: customer.zipCode || '', 
+      zipCode: customer.zipCode || '',
 
       // URLs dos Documentos
       cnhUrl: customer.cnhUrl,
       proofUrl: customer.proofUrl,
       carDocumentUrl: customer.carDocumentUrl, // <--- FALTAVA ISSO
-      
+
       // Bloqueio
       isBlocked: customer.isBlocked,
       blockReason: customer.blockReason
     });
 
     // --- 3. ATUALIZAÇÃO VISUAL DOS BOTÕES DE ARQUIVO ---
-    
+
     // CNH
     if (customer.cnhUrl) this.fileNameCNH = 'Documento Atual (Salvo)';
     else this.fileNameCNH = '';
@@ -214,7 +218,7 @@ export class CustomersComponent implements OnInit {
     else this.fileNameCarDoc = '';
   }
 
-  onSubmit() {    
+  onSubmit() {
     if (this.customerForm.valid) {
       const formValue = this.customerForm.value;
       const fullAddress = `${formValue.street || ''}, ${formValue.number || ''} - ${formValue.district || ''} - ${formValue.city || ''}`;
@@ -222,7 +226,7 @@ export class CustomersComponent implements OnInit {
       const payload = { ...formValue, address: fullAddress };
 
       if (this.isEditMode && this.selectedCustomerId) {
-        
+
         this.customerService.updateCustomer(this.selectedCustomerId, payload).subscribe({
           next: () => {
             this.displayModal = false;
@@ -304,15 +308,30 @@ export class CustomersComponent implements OnInit {
     this.displayDocsModal = true;
   }
 
-  openHistory(customer: any) {
-    this.customerService.getHistory(customer.id).subscribe({
-      next: (data) => {
-        this.historyData = data;
-        this.displayHistory = true;
-      },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar histórico.' })
-    });
-  }
+openHistory(customer: any) {
+  debugger
+  // 1. Limpa os dados antigos para garantir
+  this.historyData = null; 
+  this.selectedHistoryCustomer = null;
+
+  // Opcional: Você pode abrir o modal aqui se quiser mostrar um "loading" 
+  // this.displayHistory = true; 
+
+  this.customerService.getHistory(customer.id).subscribe({
+    next: (data) => {
+      this.historyData = data;
+      this.selectedHistoryCustomer = customer;
+      
+      // Abre o modal agora com os dados prontos
+      this.displayHistory = true; 
+    },
+    error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar histórico.' });
+        // Se abriu o modal antes, fecha ele aqui no erro
+        // this.displayHistory = false; 
+    }
+  });
+}
 
   // Abertura segura de PDF (Contrato/Blob)
   viewContract(rental: any) {
