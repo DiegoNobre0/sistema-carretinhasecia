@@ -35,8 +35,8 @@ export class LoginComponent implements OnInit {
     private messageService: MessageService
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]], 
-      password: ['', Validators.required],
+      email: ['diego@teste.com', [Validators.required, Validators.email]], 
+      password: ['123456', Validators.required],
       remember: [false]
     });
   }
